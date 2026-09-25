@@ -39,9 +39,13 @@
           "mappingMode": "defineBelow",
           "value": {
             "employee_id": "={{ $fromAI('employee_id', \"Employee ID of the new hire to onboard (for example EMP-2001)\", 'string') }}",
-            "employee_name": "={{ $fromAI('employee_name', \"Full name of the new hire, used if the employee is not already in the Employees Data Table\", 'string') }}",
-            "email": "={{ $fromAI('email', \"Email address of the new hire, used if the employee is not already in the Employees Data Table\", 'string') }}",
-            "isVirtual": "={{ $fromAI('isVirtual', \"Whether the role is virtual/remote (true or false), used if the employee is not already in the Employees Data Table\", 'string') }}"
+            "employee_name": "={{ $fromAI('employee_name', \"Full name of the new hire\", 'string') }}",
+            "email": "={{ $fromAI('email', \"Email address of the new hire\", 'string') }}",
+            "isVirtual": "={{ $fromAI('isVirtual', \"true if the role is virtual/remote, otherwise false\", 'string') }}",
+            "department": "={{ $fromAI('department', \"Department the new hire is joining (optional)\", 'string') }}",
+            "role_title": "={{ $fromAI('role_title', \"Job title of the new hire (optional)\", 'string') }}",
+            "joining_date": "={{ $fromAI('joining_date', \"Joining date in YYYY-MM-DD format (optional)\", 'string') }}",
+            "welcome_message": "={{ $fromAI('welcome_message', \"Optional personalised welcome paragraphs to use as the email body (no greeting or sign-off)\", 'string') }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -75,6 +79,42 @@
             {
               "id": "isVirtual",
               "displayName": "isVirtual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "role_title",
+              "displayName": "role_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "joining_date",
+              "displayName": "joining_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "welcome_message",
+              "displayName": "welcome_message",
               "required": false,
               "defaultMatch": false,
               "display": true,

@@ -4,6 +4,13 @@ const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let employees = [];
 let chatHistory = [];
+let draftMessage = '';
+const secs = (ms) => (ms ? ` · ${(ms / 1000).toFixed(1)} s` : '');
+const TOOL_NAMES = {
+  get_policy: 'Policy Lookup (n8n MCP)', answer_policy_question: 'Policy Intelligence (n8n MCP)',
+  get_onboarding_status: 'Onboarding Progress (n8n MCP)', list_new_hires: 'New-hire list (Supabase)',
+  escalate_to_human: 'Escalated to People Ops',
+};
 
 async function api(path, body) {
   const res = await fetch('/api' + path, body ? {
@@ -77,23 +84,26 @@ $('#btn-preview').addEventListener('click', async (ev) => {
   try {
     const r = await api('/welcome/preview', { employee_id: id });
     $('#welcome-out').classList.remove('muted');
+    draftMessage = r.message;
     $('#welcome-out').textContent = r.message;
     const emp = r.employee;
     $('#btn-send').disabled = !emp.email;
-    $('#send-out').innerHTML = `<p class="hint">Will email <b>${esc(emp.email || 'no email on file')}</b>${emp.is_virtual ? ' and create a Google Calendar orientation invite (virtual role)' : ' (office role — no calendar invite)'}.</p>`;
+    $('#send-out').innerHTML = `<span class="mcp-badge">${esc(r.source)}</span><p class="hint">Will email <b>${esc(emp.email || 'no email on file')}</b>${emp.is_virtual ? ' and create a Google Calendar orientation invite (virtual role)' : ' (office role — no calendar invite)'}.</p>`;
   } catch (e) { $('#welcome-out').innerHTML = errorBox(e.message); }
   busy(ev.target, false);
 });
+
+$('#welcome-emp').addEventListener('change', () => { draftMessage = ''; $('#btn-send').disabled = true; });
 
 $('#btn-send').addEventListener('click', async (ev) => {
   const id = $('#welcome-emp').value; if (!id) return;
   busy(ev.target, true, 'Calling New Hire Welcome MCP…');
   try {
-    const r = await api('/welcome/send', { employee_id: id });
+    const r = await api('/welcome/send', { employee_id: id, message: draftMessage });
     const d = r.result || {};
     $('#send-out').innerHTML = `<div class="result"><h3>${statusPill(d.overall_status === 'Success' ? 'Complete' : d.overall_status)} ${esc(d.employee_name || id)}</h3>
       Email: <b>${esc(d.email_status)}</b><br>Calendar: <b>${esc(d.calendar_status)}</b>
-      <span class="mcp-badge">${esc(r.source)} · ${r.ms} ms</span></div>`;
+      <span class="mcp-badge">${esc(r.source)}${secs(r.ms)}</span></div>`;
     loadEmployees();
   } catch (e) { $('#send-out').innerHTML = errorBox(e.message); }
   busy(ev.target, false);
@@ -132,13 +142,13 @@ async function askPolicy(mode, btn) {
         ${d.human_review_required ? '<span class="pill warn">human review advised</span>' : ''}</h3>
         ${r.summary ? `<p>${esc(r.summary)}</p><details><summary>Policy evidence</summary><p>${esc(d.answer)}</p></details>` : `<p>${esc(d.answer)}</p>`}
         <span class="source">Source: ${esc(d.source_document || '—')} ${d.source_section ? '· ' + esc(d.source_section) : ''} · similarity ${esc(d.similarity)}</span>
-        <span class="mcp-badge">${esc(r.source)} · ${r.ms} ms</span></div>`;
+        <span class="mcp-badge">${esc(r.source)}${secs(r.ms)}</span></div>`;
     } else {
       const d = r.result || {};
       out.innerHTML = d.status === 'Found'
         ? `<div class="result"><h3>${esc(d.title)}</h3><p>${esc(d.answer)}</p>
            <span class="source">Source: ${/^https?:/.test(d.source_document) ? `<a href="${esc(d.source_document)}" target="_blank" rel="noopener">policy document (Google Drive)</a>` : esc(d.source_document)}</span>
-           <span class="mcp-badge">${esc(r.source)} · ${r.ms} ms</span></div>`
+           <span class="mcp-badge">${esc(r.source)}${secs(r.ms)}</span></div>`
         : `<div class="result error"><h3>No matching policy found</h3>Try Policy Intelligence, or contact People Ops.<span class="mcp-badge">${esc(r.source)}</span></div>`;
     }
   } catch (e) { out.innerHTML = errorBox(e.message); }
@@ -159,7 +169,7 @@ function addMsg(role, text, tools) {
   if (tools?.length) {
     const t = document.createElement('span');
     t.className = 'tools';
-    t.textContent = 'Tools used: ' + tools.map((x) => `${x.tool}${x.ok ? '' : ' (failed)'}`).join(', ');
+    t.textContent = 'Answered using: ' + tools.map((x) => `${TOOL_NAMES[x.tool] || x.tool}${x.ok ? '' : ' (failed)'}`).join(', ') + (tools.some((x) => x.tool === 'escalate_to_human' || x.tool.startsWith('Groq')) ? '' : ' · Groq AI');
     div.appendChild(t);
   }
   $('#chat-log').appendChild(div);
@@ -177,7 +187,7 @@ $('#chat-form').addEventListener('submit', async (ev) => {
   try {
     const r = await api('/chat', { messages: chatHistory });
     thinking.remove();
-    addMsg('bot', r.reply || '(no reply)', r.trace);
+    addMsg('bot', r.reply || '(no reply)', r.trace.length ? r.trace : [{ tool: 'Groq AI only (no tool needed)', ok: true }]);
     chatHistory.push({ role: 'assistant', content: r.reply || '' });
   } catch (e) { thinking.textContent = 'Sorry — ' + e.message; }
   btn.disabled = false;

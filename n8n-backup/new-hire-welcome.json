@@ -29,6 +29,22 @@
             {
               "name": "isVirtual",
               "type": "string"
+            },
+            {
+              "name": "department",
+              "type": "string"
+            },
+            {
+              "name": "role_title",
+              "type": "string"
+            },
+            {
+              "name": "joining_date",
+              "type": "string"
+            },
+            {
+              "name": "welcome_message",
+              "type": "string"
             }
           ]
         }
@@ -78,7 +94,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const trigger = $('New Hire Onboarding Trigger').item.json;\nconst employeeId = trigger.employee_id;\nconst rows = $('Get Employee Row').all().map(i => i.json).filter(r => r.employeeId);\n\nif (rows.length) {\n  const emp = rows[0];\n  const isVirtual = emp.isVirtual === true || emp.isVirtual === 'true' || emp.isVirtual === '1' || emp.isVirtual === 1;\n  return [{\n    json: {\n      employee_id: emp.employeeId,\n      employee_name: emp.employeeName,\n      email: emp.email,\n      isVirtual: isVirtual,\n      found: true\n    }\n  }];\n}\n\n// Not in the pre-seeded Employees Data Table (e.g. an employee created\n// live through the OnboardAI app, which is a separate data store).\n// Fall back to the details passed directly by the caller so the\n// automation still works instead of failing 'Not Found'.\nif (trigger.employee_name && trigger.email) {\n  const isVirtual = trigger.isVirtual === true || trigger.isVirtual === 'true' || trigger.isVirtual === '1' || trigger.isVirtual === 1;\n  return [{\n    json: {\n      employee_id: employeeId,\n      employee_name: trigger.employee_name,\n      email: trigger.email,\n      isVirtual: isVirtual,\n      found: true\n    }\n  }];\n}\n\nreturn [{ json: { employee_id: employeeId, employee_name: null, email: null, isVirtual: null, found: false } }];\n"
+        "jsCode": "const trigger = $('New Hire Onboarding Trigger').item.json;\nconst employeeId = trigger.employee_id;\nconst rows = $('Get Employee Row').all().map(i => i.json).filter(r => r.employeeId);\nconst truthy = v => v === true || v === 'true' || v === '1' || v === 1;\nconst esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nfunction build(base) {\n  const joining = trigger.joining_date || base.joiningDate || '';\n  let joiningPretty = joining;\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(joining)) {\n    const d = new Date(joining + 'T00:00:00Z');\n    joiningPretty = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });\n  }\n  const msg = (trigger.welcome_message || '').trim() || \"We're excited to have you join us. Your onboarding coordinator will reach out shortly with next steps.\";\n  return {\n    employee_id: base.employee_id,\n    employee_name: base.employee_name,\n    email: base.email,\n    isVirtual: base.isVirtual,\n    department: trigger.department || base.department || 'To be confirmed',\n    role_title: trigger.role_title || base.role_title || 'To be confirmed',\n    joining_date: joining,\n    joining_date_pretty: joiningPretty || 'To be confirmed',\n    work_mode: base.isVirtual ? 'Remote / virtual — an orientation invite will be sent to your calendar' : 'Office-based — Pune Headquarters',\n    message_html: msg.split(/\\n\\s*\\n/).map(p => '<p style=\"margin:0 0 14px;\">' + esc(p).replace(/\\n/g, '<br>') + '</p>').join(''),\n    found: true\n  };\n}\n\nif (rows.length) {\n  const emp = rows[0];\n  return [{ json: build({ employee_id: emp.employeeId, employee_name: emp.employeeName, email: emp.email || trigger.email, isVirtual: truthy(emp.isVirtual), joiningDate: emp.joiningDate }) }];\n}\nif (trigger.employee_name && trigger.email) {\n  return [{ json: build({ employee_id: employeeId, employee_name: trigger.employee_name, email: trigger.email, isVirtual: truthy(trigger.isVirtual) }) }];\n}\nreturn [{ json: { employee_id: employeeId, employee_name: null, email: null, isVirtual: null, found: false } }];\n"
       }
     },
     {
@@ -126,7 +142,7 @@
         "sendTo": "={{ $json.email }}",
         "subject": "=Welcome to Aarohan Technologies, {{ $json.employee_name }}!",
         "emailType": "html",
-        "message": "=<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;\"><div style=\"background:linear-gradient(135deg,#1a5fb4,#4c8fdb);padding:24px 28px;text-align:center;\"><img src=\"https://onboarding-ai-ueri.onrender.com/aarohan-logo.webp\" alt=\"Aarohan Technologies\" style=\"height:40px;\" /></div><div style=\"padding:28px;color:#0f172a;\"><p style=\"font-size:15px;line-height:1.6;margin:0 0 14px;\">Hi {{ $json.employee_name }},</p><p style=\"font-size:15px;line-height:1.6;margin:0 0 14px;\">Welcome to Aarohan Technologies! We're excited to have you join us.</p><p style=\"font-size:15px;line-height:1.6;margin:0 0 20px;\">Your onboarding coordinator will reach out shortly with next steps.</p><p style=\"font-size:14px;line-height:1.6;margin:0;color:#334155;\">Best regards,<br>People Operations Team &middot; Aarohan Technologies</p></div></div>",
+        "message": "=<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#13213d;border:1px solid #dfe6f0;border-radius:10px;overflow:hidden;\"><div style=\"height:6px;background:#1565d8;\"></div><div style=\"padding:28px;\"><h2 style=\"margin:0 0 18px;color:#0d2552;font-size:20px;\">Welcome to Aarohan Technologies, {{ $json.employee_name }}!</h2><p style=\"margin:0 0 14px;font-size:15px;\">Hi {{ $json.employee_name }},</p><div style=\"font-size:15px;line-height:1.6;\">{{ $json.message_html }}</div><table style=\"margin:18px 0;border-collapse:collapse;font-size:14px;width:100%;\"><tr><td style=\"padding:9px 12px;background:#f4f7fb;border:1px solid #dfe6f0;width:38%;\"><b>Department</b></td><td style=\"padding:9px 12px;border:1px solid #dfe6f0;\">{{ $json.department }}</td></tr><tr><td style=\"padding:9px 12px;background:#f4f7fb;border:1px solid #dfe6f0;\"><b>Role</b></td><td style=\"padding:9px 12px;border:1px solid #dfe6f0;\">{{ $json.role_title }}</td></tr><tr><td style=\"padding:9px 12px;background:#f4f7fb;border:1px solid #dfe6f0;\"><b>Joining date</b></td><td style=\"padding:9px 12px;border:1px solid #dfe6f0;\">{{ $json.joining_date_pretty }}</td></tr><tr><td style=\"padding:9px 12px;background:#f4f7fb;border:1px solid #dfe6f0;\"><b>Work mode</b></td><td style=\"padding:9px 12px;border:1px solid #dfe6f0;\">{{ $json.work_mode }}</td></tr></table><p style=\"margin:0;font-size:15px;line-height:1.6;\">If you have any questions before your first day, just reply to this email.</p></div><div style=\"padding:20px 28px;border-top:1px solid #dfe6f0;background:#f9fbfd;\"><p style=\"margin:0 0 12px;font-size:14px;line-height:1.5;\">Warm regards,<br><b>People Operations Team</b><br>Aarohan Technologies</p><img src=\"https://aarohan-onboardai.netlify.app/logo.png\" alt=\"Aarohan Technologies\" style=\"height:46px;\" /></div></div>",
         "options": {
           "appendAttribution": false
         }
@@ -190,7 +206,7 @@
         "end": "={{ $now.plus(1, 'days').set({ hour: 11, minute: 0, second: 0 }).toISO() }}",
         "additionalFields": {
           "summary": "=Onboarding Orientation - {{ $('Prepare Employee Context').item.json.employee_name }}",
-          "description": "=Welcome orientation session for {{ $('Prepare Employee Context').item.json.employee_name }} (Aarohan Technologies). Virtual onboarding session — join link to be shared by People Ops.",
+          "description": "=Welcome orientation for {{ $('Prepare Employee Context').item.json.employee_name }} ({{ $('Prepare Employee Context').item.json.role_title }}, {{ $('Prepare Employee Context').item.json.department }}) — Aarohan Technologies. Virtual onboarding session; join link to be shared by People Ops.",
           "attendees": [
             "={{ $('Prepare Employee Context').item.json.email }}"
           ]
@@ -347,7 +363,7 @@
     "availableInMCP": true
   },
   "meta": {
-    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id ZsmzKDtgO204aioS. Credentials stripped.",
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id ZsmzKDtgO204aioS. Credentials stripped. Updated 2026-09-25: department/role/joining date/welcome_message inputs; new email template with logo in signature.",
     "description": "Sends Gmail welcome email; creates Google Calendar orientation event for virtual roles."
   },
   "active": false,

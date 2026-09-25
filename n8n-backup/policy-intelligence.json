@@ -67,24 +67,33 @@
     {
       "id": "query-policy-chunks",
       "name": "Query Policy Chunks (Supabase)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.7,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         672,
         0
       ],
       "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT document_id, section, chunk_text, (embedding <=> $1::vector) AS distance FROM policy_chunks ORDER BY distance LIMIT 5;",
-        "options": {
-          "queryReplacement": "={{ $json.embedding_vector_literal }}"
-        }
-      },
-      "credentials": {
-        "postgres": {
-          "id": "",
-          "name": "REPLACE_ME - Supabase Postgres (session pooler)"
-        }
+        "method": "POST",
+        "url": "https://vbdouluxgduqmhqnbagn.supabase.co/rest/v1/rpc/match_policy_chunks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "REPLACE_ME_SUPABASE_ANON_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_ME_SUPABASE_ANON_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"query_embedding\": $json.embedding_vector_literal, \"match_count\": 5 } }}",
+        "options": {}
       }
     },
     {
@@ -154,7 +163,7 @@
     "availableInMCP": true
   },
   "meta": {
-    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id GVPn10p2N8LBXQ4n. Credentials stripped.",
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id GVPn10p2N8LBXQ4n. Credentials stripped. Updated 2026-09-25: retrieval switched from Postgres node to Supabase RPC match_policy_chunks (see ../supabase/match_policy_chunks.sql).",
     "description": "RAG: Gemini embedding -> Supabase pgvector top-5 -> deterministic evidence/confidence gating."
   },
   "active": false,

@@ -32,7 +32,8 @@ Full URL = `https://aparbatlearn.app.n8n.cloud` + path.
 3. In each Engine, **re-point every Data Table node** to your new table IDs. The old IDs are `rE0SYvDEpq8ZDGzR` (Employees), `UrT5HV43x3HX6ZvY` (Tasks), `duVEApIHmfhTR5JE` (Documents) and `dnmeCejlY1E7SR3C` (Policies).
 4. **Re-attach credentials.** Look for any node showing `REPLACE_ME`:
    - Gmail OAuth2 and Google Calendar OAuth2 (New Hire Welcome).
-   - Google Gemini API and Postgres (Policy Intelligence). For Postgres, use the Supabase session-pooler connection string.
+   - Google Gemini API (Policy Intelligence).
+   - In Policy Intelligence → "Query Policy Chunks (Supabase)", replace `REPLACE_ME_SUPABASE_ANON_KEY` (2 places) with the Supabase anon key. The SQL function it calls is in [`../supabase/match_policy_chunks.sql`](../supabase/match_policy_chunks.sql).
 5. **Import the 4 `*-mcp.json` wrappers.** In each one, open the tool node and change **Workflow** to the new ID of its Engine.
 6. **Activate** the 4 MCP wrappers. The endpoint paths stay the same, so only the hostname changes. Put the new URLs in the app's `MCP_*_URL` environment variables.
 7. `policy-embedding-ingestion.json` only needs a re-run if the policy text changes. The embeddings already live in Supabase (`policy_chunks`, 38 rows, 768 dimensions).
@@ -52,6 +53,10 @@ The goal is to run the same 4 tools on free, permanent infrastructure. Suggested
 
 Order of work: data → Progress → Lookup → Intelligence → Welcome (it has OAuth, so it is the hardest). Test each one with the app's `/api/selftest` endpoint after switching its `MCP_*_URL`.
 
+## Change log
+
+- **25 Sep 2026 (afternoon):** New Hire Welcome now accepts `department`, `role_title`, `joining_date` and `welcome_message`, and uses a new email template with the logo in the signature. Policy Intelligence now calls the Supabase function `match_policy_chunks` over HTTP instead of a Postgres node, because no Postgres credential existed and the workflow could not be activated.
+
 ## Regenerating these files
 
-The `tools/*.py` scripts rebuild every JSON file from the workflow definitions. Run `python3 build_mcp_and_engines.py`, `python3 build_ingestion.py` and `python3 build_data_tables.py`.
+The `tools/*.py` scripts built the first version of these files. The **JSON files are now the source of truth**, because they include the changes listed above.

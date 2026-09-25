@@ -76,7 +76,7 @@ const routes = {
     const id = url.searchParams.get('id') || '';
     if (!EMP_ID.test(id)) return json({ error: 'Valid employee id required (e.g. EMP-1001).' }, 400);
     const [emp, tasks] = await Promise.all([db.getEmployee(id), db.listTasks(id)]);
-    let progress, source = 'MCP: onboardai-onboarding-progress (get_onboarding_status)', mcpError = null;
+    let progress, source = 'Calculated by the Onboarding Progress tool (n8n MCP)', mcpError = null;
     try {
       progress = (await mcpTools.onboardingProgress(id)).data;
       if (!progress || progress.status === 'Not Found') throw new Error('Employee not in n8n Data Tables');
@@ -84,7 +84,7 @@ const routes = {
       mcpError = e.message;
       if (!emp) return json({ error: 'Employee not found.' }, 404);
       progress = computeProgress(emp, tasks);
-      source = 'Supabase (local fallback — same rules as MCP engine)';
+      source = 'Calculated from Supabase data (this hire is not in n8n yet)';
     }
     return json({ employee: emp, tasks, progress, source, mcp_note: mcpError });
   },
@@ -94,21 +94,22 @@ const routes = {
     const emp = await db.getEmployee(employee_id);
     if (!emp) return json({ error: 'Employee not found.' }, 404);
     const msg = await groqChat([
-      { role: 'system', content: 'You write warm, human onboarding messages for Aarohan Technologies People Ops. No corporate jargon, no emojis, under 120 words. Sign off as "People Operations, Aarohan Technologies".' },
-      { role: 'user', content: `Write a personalised welcome note for ${emp.employee_name}, joining as ${emp.role_title || 'a new team member'} in ${emp.department} on ${emp.joining_date}. Work mode: ${emp.is_virtual ? 'remote/virtual — mention a virtual orientation invite will arrive on their calendar and IT will courier the laptop' : 'office-based at Pune HQ — mention Day-1 check-in with People Ops and ID badge'}.` },
+      { role: 'system', content: 'You write warm, human onboarding messages for Aarohan Technologies People Ops. No corporate jargon, no emojis, under 120 words. Write ONLY 2 short body paragraphs separated by a blank line: no greeting line, no sign-off, no subject (the email template adds those).' },
+      { role: 'user', content: `Write the body of a personalised welcome note for ${emp.employee_name}, joining as ${emp.role_title || 'a new team member'} in ${emp.department} on ${emp.joining_date}. Work mode: ${emp.is_virtual ? 'remote/virtual — mention a virtual orientation invite will arrive on their calendar and IT will courier the laptop' : 'office-based at Pune HQ — mention Day-1 check-in with People Ops and ID badge'}.` },
     ], { temperature: 0.6, max_tokens: 300 });
-    return json({ employee: emp, message: msg.content });
+    return json({ employee: emp, message: msg.content, source: 'Written by Groq AI' });
   },
 
   'POST /welcome/send': async (req) => {
-    const { employee_id } = await readBody(req);
+    const { employee_id, message } = await readBody(req);
     const emp = await db.getEmployee(employee_id);
     if (!emp) return json({ error: 'Employee not found.' }, 404);
+    if (typeof message === 'string') emp.welcome_message = message.slice(0, 2000);
     if (!emp.email) return json({ error: 'This employee has no email on file, so no welcome email can be sent.' }, 400);
     const r = await mcpTools.newHireWelcome(emp);
     if (r.data?.overall_status === 'Success') await db.markWelcomed(employee_id);
     await db.logActivity(employee_id, 'welcome_sent', r.data);
-    return json({ result: r.data, source: 'MCP: onboardai-new-hire-welcome (onboard_new_hire)', ms: r.ms });
+    return json({ result: r.data, source: 'Sent by the New Hire Welcome tool (n8n MCP) via Gmail + Google Calendar', ms: r.ms });
   },
 
   'POST /policy': async (req) => {
@@ -124,10 +125,10 @@ const routes = {
           { role: 'user', content: `Question: ${question}\n\nEvidence (${r.data.source_document} / ${r.data.source_section}):\n${r.data.answer}` },
         ], { temperature: 0.1, max_tokens: 220 })).content;
       }
-      return json({ mode, result: r.data, summary, source: 'MCP: onboardai-policy-intelligence (answer_policy_question) + Groq', ms: r.ms });
+      return json({ mode, result: r.data, summary, source: summary ? 'Found by the Policy Intelligence tool (n8n MCP + Supabase search) · explained by Groq AI' : 'Found by the Policy Intelligence tool (n8n MCP + Supabase search)', ms: r.ms });
     }
     const r = await mcpTools.policyLookup(question);
-    return json({ mode: 'lookup', result: r.data, source: 'MCP: onboardai-policy-lookup (get_policy)', ms: r.ms });
+    return json({ mode: 'lookup', result: r.data, source: 'Found by the Policy Lookup tool (n8n MCP)', ms: r.ms });
   },
 
   'POST /chat': async (req) => {

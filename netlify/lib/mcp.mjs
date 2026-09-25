@@ -106,5 +106,9 @@ export const mcpTools = {
     employee_name: emp.employee_name || '',
     email: emp.email || '',
     isVirtual: String(!!emp.is_virtual),
+    department: emp.department || '',
+    role_title: emp.role_title || '',
+    joining_date: emp.joining_date || '',
+    welcome_message: emp.welcome_message || '',
   }),
 };
