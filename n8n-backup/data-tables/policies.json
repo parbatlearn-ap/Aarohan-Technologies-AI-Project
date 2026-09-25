@@ -1,0 +1,36 @@
+{
+  "n8nDataTable": "OnboardAI Policies",
+  "originalId": "dnmeCejlY1E7SR3C",
+  "rows": [
+    {
+      "topic": "remote_work",
+      "title": "Remote Work Policy",
+      "body": "Aarohan Technologies operates a hybrid-first model. Employees may work remotely up to 3 days per week; the remaining 2 days require in-office presence on the team's designated anchor days. Fully remote arrangements require Director-level approval and are reviewed quarterly. Remote work requires a stable internet connection (min 20 Mbps) and availability during core hours (10:00-16:00 IST). Employees must be reachable on Slack and attend all scheduled meetings via video. Equipment (laptop, monitor) is provided by IT; home-office stipend of INR 3,000/month is available on submission of receipts. Remote work privileges may be suspended for performance or attendance issues at manager discretion.",
+      "sourceDocument": "Aarohan_Remote_Work_Policy_v2.3.pdf"
+    },
+    {
+      "topic": "time_off",
+      "title": "Time Off / Leave Policy",
+      "body": "Aarohan Technologies provides 18 days of Paid Time Off (PTO) per calendar year, accrued monthly at 1.5 days/month, plus 12 public holidays and 7 sick days (non-carry-forward). Unused PTO up to 5 days may be carried forward to the next year; anything beyond is forfeited on Dec 31. Leave requests must be submitted via the HR portal at least 5 working days in advance for planned leave; sick leave may be reported same-day to the reporting manager. Maternity leave is 26 weeks paid; paternity leave is 2 weeks paid. Bereavement leave is 5 days for immediate family. Unapproved absences beyond 2 consecutive days without manager sign-off are treated as Leave Without Pay (LWP) and may trigger HR review.",
+      "sourceDocument": "Aarohan_Leave_Policy_v4.1.pdf"
+    },
+    {
+      "topic": "benefits",
+      "title": "Benefits Enrollment Policy",
+      "body": "All full-time employees are eligible for benefits enrollment starting Day 1, with coverage effective from the first day of the following month. The open enrollment window runs annually from November 1-15; changes outside this window require a qualifying life event (marriage, birth, adoption, loss of other coverage) reported within 30 days. Aarohan Technologies covers group health insurance (employee + 4 dependents, INR 5,00,000 sum insured), term life insurance (5x annual CTC), and accidental disability cover. Optional add-ons include parental health cover and OPD reimbursement (INR 15,000/year), enrolled and paid via payroll deduction. Enrollment is completed through the Benefits Portal; employees who do not enroll within 30 days of eligibility default to the Standard Health Plan only.",
+      "sourceDocument": "Aarohan_Benefits_Enrollment_Policy_v1.8.pdf"
+    },
+    {
+      "topic": "working_hours",
+      "title": "Working Hours Policy",
+      "body": "Standard working hours at Aarohan Technologies are 9:00 AM to 6:00 PM IST, Monday through Friday, with a mandatory 1-hour lunch break and core collaboration hours of 10:00 AM-4:00 PM during which all employees must be available. Total expected weekly hours are 40, exclusive of breaks. Flexible start times between 8:00-10:00 AM are permitted with manager approval, provided 8 hours are logged daily. Overtime for non-exempt roles must be pre-approved by the reporting manager and is compensated at 1.5x the hourly rate or via compensatory time off, employee's choice. Time tracking is mandatory via the Aarohan Timesheet tool; unlogged hours for 3+ consecutive days trigger an automated HR follow-up.",
+      "sourceDocument": "Aarohan_Working_Hours_Policy_v2.0.pdf"
+    },
+    {
+      "topic": "grievance",
+      "title": "Employee Grievance / Escalation Policy",
+      "body": "Aarohan Technologies maintains a 3-tier grievance resolution process. Tier 1: raise the concern directly with your reporting manager, who must acknowledge within 2 business days and respond with a resolution plan within 7 business days. Tier 2: if unresolved or the concern involves the manager, escalate to HR Business Partner via the confidential Grievance Portal or grievance@aarohantech.example; HR must respond within 5 business days and convene a review within 10 business days. Tier 3: unresolved or serious matters (harassment, discrimination, ethics violations) go to the Employee Relations Committee, which investigates and issues a final decision within 15 business days. Retaliation against anyone raising a grievance in good faith is strictly prohibited and is itself grounds for disciplinary action. All grievance records are kept confidential and accessible only to HR and the Employee Relations Committee.",
+      "sourceDocument": "Aarohan_Grievance_Escalation_Policy_v1.5.pdf"
+    }
+  ]
+}

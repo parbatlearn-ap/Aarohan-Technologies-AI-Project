@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OnboardAI · Aarohan Technologies</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="Aarohan Technologies" class="logo" />
+      <div>
+        <h1>OnboardAI</h1>
+        <p>AI Employee Pre-boarding &amp; Onboarding Command Center</p>
+      </div>
+    </div>
+    <span id="health" class="pill muted">Checking services…</span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="welcome">New Hire Welcome</button>
+    <button class="tab" data-tab="policy">Policy Assistant</button>
+    <button class="tab" data-tab="progress">Onboarding Progress</button>
+  </nav>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="tab-dashboard" class="panel active">
+      <div class="cards">
+        <div class="card stat"><span class="label">New Hires</span><span id="stat-hires" class="value">–</span><span class="sub">in pre-boarding / onboarding</span></div>
+        <div class="card stat"><span class="label">Avg. Onboarding Progress</span><span id="stat-progress" class="value">–</span><span class="sub">tasks completed</span></div>
+        <div class="card stat"><span class="label">Pending Tasks</span><span id="stat-pending" class="value">–</span><span class="sub">across all new hires</span></div>
+        <div class="card stat clickable" data-goto="policy"><span class="label">Policy Assistant</span><span class="value small">Ask →</span><span class="sub">grounded in Aarohan policies</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>New hires</h2><button class="btn ghost" id="refresh">Refresh</button></div>
+        <div class="table-wrap"><table id="emp-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Mode</th><th>Joining</th><th>Progress</th><th>Welcome</th></tr></thead>
+          <tbody><tr><td colspan="7" class="muted">Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <h2>How this works</h2>
+        <p class="muted">Every AI answer is produced through tools, not guessed: the browser calls a secure Netlify Function, which calls
+          <b>Groq</b> (LLM), <b>Supabase</b> (new-hire data) and four custom <b>n8n MCP servers</b> (Policy Lookup, Policy Intelligence, Onboarding Progress, New Hire Welcome → Gmail + Google Calendar). Results show which MCP tool answered.</p>
+      </div>
+    </section>
+
+    <!-- WELCOME -->
+    <section id="tab-welcome" class="panel">
+      <div class="grid2">
+        <div class="card">
+          <h2>1. Select a new hire</h2>
+          <label>Employee<select id="welcome-emp"></select></label>
+          <div class="row">
+            <button class="btn" id="btn-preview">Generate welcome message</button>
+          </div>
+          <details class="add-hire">
+            <summary>+ Add a new hire</summary>
+            <form id="add-form">
+              <label>Full name<input name="employee_name" required maxlength="80" /></label>
+              <label>Email<input name="email" type="email" required maxlength="120" /></label>
+              <label>Department<input name="department" maxlength="60" placeholder="e.g. Engineering" /></label>
+              <label>Role<input name="role_title" maxlength="60" placeholder="e.g. Data Analyst" /></label>
+              <label>Joining date<input name="joining_date" type="date" /></label>
+              <label class="check"><input name="is_virtual" type="checkbox" /> Virtual / remote role</label>
+              <button class="btn" type="submit">Save new hire</button>
+            </form>
+          </details>
+        </div>
+        <div class="card">
+          <h2>2. Review &amp; send</h2>
+          <div id="welcome-out" class="output muted">Pick a new hire and generate a message. Groq drafts a personalised note; sending runs the <b>New Hire Welcome MCP</b>, which emails the hire via Gmail and — for virtual roles — creates a Google Calendar orientation invite.</div>
+          <div class="row"><button class="btn accent" id="btn-send" disabled>Send welcome email (+ calendar if virtual)</button></div>
+          <div id="send-out"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- POLICY -->
+    <section id="tab-policy" class="panel">
+      <div class="grid2">
+        <div class="card">
+          <h2>Ask a policy question</h2>
+          <textarea id="policy-q" rows="3" maxlength="500" placeholder="e.g. What is the leave policy?"></textarea>
+          <div class="chips">
+            <button class="chip" data-q="What is the leave policy?">Leave policy</button>
+            <button class="chip" data-q="What are the working hours?">Working hours</button>
+            <button class="chip" data-q="What documents are required before joining?" data-mode="intelligence">Required documents</button>
+            <button class="chip" data-q="What is the Day-1 schedule for remote hires?" data-mode="intelligence">Onboarding Day-1</button>
+          </div>
+          <div class="row">
+            <button class="btn" id="btn-lookup">Quick Lookup</button>
+            <button class="btn accent" id="btn-intel">Policy Intelligence</button>
+          </div>
+          <p class="hint">Quick Lookup = exact policy record (MCP: Policy Lookup). Policy Intelligence = semantic search over policy chunks in Supabase pgvector with confidence scoring (MCP: Policy Intelligence), summarised by Groq.</p>
+          <div id="policy-out"></div>
+        </div>
+        <div class="card chat-card">
+          <h2>AI Assistant</h2>
+          <div id="chat-log" class="chat-log">
+            <div class="msg bot">Hi! I'm OnboardAI. Ask me about Aarohan policies or a new hire's onboarding status (e.g. “How is EMP-1003 doing?”).</div>
+          </div>
+          <form id="chat-form" class="chat-form">
+            <input id="chat-in" maxlength="500" placeholder="Type a question…" autocomplete="off" />
+            <button class="btn" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section id="tab-progress" class="panel">
+      <div class="card">
+        <div class="row">
+          <label class="grow">Employee<select id="progress-emp"></select></label>
+          <button class="btn" id="btn-progress">Check progress</button>
+        </div>
+      </div>
+      <div id="progress-out"></div>
+    </section>
+  </main>
+
+  <footer>Aarohan Technologies · OnboardAI capstone demo · Data shown is fictional</footer>
+  <script src="app.js"></script>
+</body>
+</html>

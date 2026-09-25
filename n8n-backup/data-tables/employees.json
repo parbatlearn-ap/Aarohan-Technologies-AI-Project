@@ -1,0 +1,56 @@
+{
+  "n8nDataTable": "OnboardAI Employees",
+  "originalId": "rE0SYvDEpq8ZDGzR",
+  "rows": [
+    {
+      "employeeId": "EMP-1001",
+      "employeeName": "Sarah Sharma",
+      "bgvStatus": "In Progress",
+      "payrollStatus": "Not Started",
+      "joiningDate": "2026-09-28",
+      "currentPhase": "BGV",
+      "email": null,
+      "isVirtual": null
+    },
+    {
+      "employeeId": "EMP-1002",
+      "employeeName": "Priya Nair",
+      "bgvStatus": "Cleared",
+      "payrollStatus": "Active",
+      "joiningDate": "2026-09-01",
+      "currentPhase": "First 2 Weeks",
+      "email": null,
+      "isVirtual": null
+    },
+    {
+      "employeeId": "EMP-1003",
+      "employeeName": "Arjun Verma",
+      "bgvStatus": "Discrepancy",
+      "payrollStatus": "Not Started",
+      "joiningDate": "2026-09-15",
+      "currentPhase": "BGV",
+      "email": null,
+      "isVirtual": null
+    },
+    {
+      "employeeId": "EMP-2001",
+      "employeeName": "Devika Rao",
+      "bgvStatus": "Cleared",
+      "payrollStatus": "Not Started",
+      "joiningDate": "2026-09-29",
+      "currentPhase": "Pre-boarding",
+      "email": "parbat.learn@gmail.com",
+      "isVirtual": "1"
+    },
+    {
+      "employeeId": "EMP-2002",
+      "employeeName": "Karan Mehta",
+      "bgvStatus": "Cleared",
+      "payrollStatus": "Not Started",
+      "joiningDate": "2026-09-29",
+      "currentPhase": "Pre-boarding",
+      "email": "parbat.learn@gmail.com",
+      "isVirtual": "0"
+    }
+  ]
+}

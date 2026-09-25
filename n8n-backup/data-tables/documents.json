@@ -1,0 +1,91 @@
+{
+  "n8nDataTable": "OnboardAI Documents",
+  "originalId": "duVEApIHmfhTR5JE",
+  "rows": [
+    {
+      "employeeId": "EMP-1001",
+      "documentName": "Identity proof (Aadhaar)",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "documentName": "Identity proof (PAN)",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "documentName": "Education certificates",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "documentName": "Previous employment relieving letter",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "documentName": "Photograph",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "documentName": "Address proof (updated)",
+      "status": "under_review"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "documentName": "Bank details form",
+      "status": "missing"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "documentName": "Identity proof (Aadhaar)",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "documentName": "Identity proof (PAN)",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "documentName": "Education certificates",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "documentName": "Bank details form",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "documentName": "Address proof",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "documentName": "Identity proof (Aadhaar)",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "documentName": "Identity proof (PAN)",
+      "status": "complete"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "documentName": "Education certificates",
+      "status": "under_review"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "documentName": "Previous employment relieving letter",
+      "status": "missing"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "documentName": "Bank details form",
+      "status": "missing"
+    }
+  ]
+}

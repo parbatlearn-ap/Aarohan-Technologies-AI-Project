@@ -1,0 +1,114 @@
+{
+  "name": "OnboardAI - New Hire Welcome MCP",
+  "nodes": [
+    {
+      "id": "mcp-trigger",
+      "name": "OnboardAI New Hire Welcome MCP",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        112
+      ],
+      "parameters": {
+        "path": "onboardai-new-hire-welcome",
+        "authentication": "none",
+        "instructions": "This MCP server exposes one tool, onboard_new_hire, for the OnboardAI (Aarohan Technologies) project. Given an employee_id, it looks up the employee in the OnboardAI Employees Data Table; if not found there, it uses the employee_name/email/isVirtual arguments passed directly instead. It sends the new hire a welcome email via Gmail, and — if the role is virtual — creates an onboarding/orientation Google Calendar event. It returns employee_id, employee_name, email_status, calendar_status, and overall_status. overall_status is \"Not Found\" only if the employee is not in the Data Table AND no employee_name/email were passed."
+      },
+      "webhookId": "477c946d-c3d3-4930-9756-415c2945e918"
+    },
+    {
+      "id": "tool",
+      "name": "onboard_new_hire",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        336
+      ],
+      "parameters": {
+        "description": "Given an employee_id (e.g. \"EMP-2001\") and, for employees not already in the Employees Data Table, their employee_name, email and isVirtual (true/false), sends the new hire a welcome email via Gmail. If the role is virtual (isVirtual true, either from the Data Table or the passed-in value), also creates an onboarding/orientation Google Calendar event. Returns employee_id, employee_name, email_status, calendar_status, and overall_status (Success / Not Found).",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "ZsmzKDtgO204aioS",
+          "__comment": "REMAP to the new id of the imported Engine (Logic) workflow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "employee_id": "={{ $fromAI('employee_id', \"Employee ID of the new hire to onboard (for example EMP-2001)\", 'string') }}",
+            "employee_name": "={{ $fromAI('employee_name', \"Full name of the new hire, used if the employee is not already in the Employees Data Table\", 'string') }}",
+            "email": "={{ $fromAI('email', \"Email address of the new hire, used if the employee is not already in the Employees Data Table\", 'string') }}",
+            "isVirtual": "={{ $fromAI('isVirtual', \"Whether the role is virtual/remote (true or false), used if the employee is not already in the Employees Data Table\", 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "employee_id",
+              "displayName": "employee_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "employee_name",
+              "displayName": "employee_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "isVirtual",
+              "displayName": "isVirtual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "onboard_new_hire": {
+      "ai_tool": [
+        [
+          {
+            "node": "OnboardAI New Hire Welcome MCP",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id h4YO9sqOB2o3jG2q. Credentials stripped.",
+    "description": "MCP Server Trigger exposing onboard_new_hire -> New Hire Welcome Engine (Gmail + Google Calendar)."
+  },
+  "active": false,
+  "pinData": {}
+}

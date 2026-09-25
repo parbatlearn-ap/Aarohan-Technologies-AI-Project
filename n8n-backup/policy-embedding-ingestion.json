@@ -1,0 +1,236 @@
+{
+  "name": "OnboardAI - Policy Embedding Ingestion",
+  "nodes": [
+    {
+      "id": "start",
+      "name": "Start Ingestion",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "prepare-8-documents",
+      "name": "Prepare 8 Documents",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const documents = [\n  {\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\"\n  },\n  {\n    \"document_id\": \"preboarding_documentation_policy\",\n    \"document_name\": \"preboarding_documentation_policy.md\",\n    \"drive_file_id\": \"1-GIwXc_qwLTwLwdMDw_fPo0Jw_Hxxif4\"\n  },\n  {\n    \"document_id\": \"bgv_policy\",\n    \"document_name\": \"bgv_policy.md\",\n    \"drive_file_id\": \"1BbqnmLanNj21hpreNU5FYA5swZk5uwd2\"\n  },\n  {\n    \"document_id\": \"payroll_benefits_policy\",\n    \"document_name\": \"payroll_benefits_policy.md\",\n    \"drive_file_id\": \"1lPl7qaAX2fHu3sb2qH4LjZnLjXjk685f\"\n  },\n  {\n    \"document_id\": \"remote_work_policy\",\n    \"document_name\": \"remote_work_policy.md\",\n    \"drive_file_id\": \"1JDajHPe0Sh747NopoJFd5YZnbHlQNs1l\"\n  },\n  {\n    \"document_id\": \"day1_office_policy\",\n    \"document_name\": \"day1_office_policy.md\",\n    \"drive_file_id\": \"1kdMzakCVY3bALTutrdYWF77EqV67gD0l\"\n  },\n  {\n    \"document_id\": \"it_security_policy\",\n    \"document_name\": \"it_security_policy.md\",\n    \"drive_file_id\": \"1Rnc-Pw_iZPlipG5-6LMUmIfKLcWrlhNI\"\n  },\n  {\n    \"document_id\": \"leave_policy\",\n    \"document_name\": \"leave_policy.md\",\n    \"drive_file_id\": \"1pzf0vp7vYm_o1uQgEpHGGNqDJBy5i9_p\"\n  }\n];\n\nreturn documents.map((d) => ({ json: d }));"
+      }
+    },
+    {
+      "id": "prepare-38-chunks",
+      "name": "Prepare 38 Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        40
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const chunks = [\n  {\n    \"chunk_id\": \"e17a1902-edda-5e20-a4ef-9d64fd526651\",\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\",\n    \"section\": \"1. Welcome\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Employee Handbook (Fictional)\\nSection: 1. Welcome\\n\\nWelcome to Aarohan Technologies. This handbook summarizes the basic expectations,\\nconduct standards, and resources available to all employees, whether office-based\\nor remote.\"\n  },\n  {\n    \"chunk_id\": \"1ab2af5f-e722-5bb1-9346-04a7420f841f\",\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\",\n    \"section\": \"2. Working Hours\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Employee Handbook (Fictional)\\nSection: 2. Working Hours\\n\\nStandard working hours are 9:30 AM–6:30 PM IST, Monday to Friday, with flexibility\\nfor remote employees to align with team meeting schedules.\"\n  },\n  {\n    \"chunk_id\": \"4622ca4c-cacf-5263-8826-a4352f2efde3\",\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\",\n    \"section\": \"3. Code of Conduct\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Employee Handbook (Fictional)\\nSection: 3. Code of Conduct\\n\\nAll employees are expected to act with integrity, treat colleagues respectfully,\\nand avoid conflicts of interest. A signed Code of Conduct Acknowledgment\\n(REQ-COMP-02) is required during onboarding.\"\n  },\n  {\n    \"chunk_id\": \"27e97b07-da9c-53ff-9dd2-23c07257858f\",\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\",\n    \"section\": \"4. Confidentiality\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Employee Handbook (Fictional)\\nSection: 4. Confidentiality\\n\\nEmployees must protect confidential company and customer information at all times.\\nA signed NDA (REQ-COMP-03) is a mandatory onboarding requirement.\"\n  },\n  {\n    \"chunk_id\": \"91046430-dcfc-54fe-87d3-226928d171d5\",\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\",\n    \"section\": \"5. Probation Period\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Employee Handbook (Fictional)\\nSection: 5. Probation Period\\n\\nNew employees serve a 90-day probation period, during which structured 30-60-90 day\\ncheck-ins are held with their manager and People Ops partner.\"\n  },\n  {\n    \"chunk_id\": \"fb6b4a40-1b4e-55ac-b441-b231a92c2ed5\",\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\",\n    \"section\": \"6. Grievance Process\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Employee Handbook (Fictional)\\nSection: 6. Grievance Process\\n\\nEmployees can raise concerns with their People Ops partner or through the (fictional)\\ninternal Aarohan People Portal. All concerns are handled confidentially.\"\n  },\n  {\n    \"chunk_id\": \"5b1b8ad9-f338-5874-ba8a-b21f2506d44b\",\n    \"document_id\": \"employee_handbook\",\n    \"document_name\": \"employee_handbook.md\",\n    \"drive_file_id\": \"1PAUKAy1-Qbex5hOKPACxPjhUtH4BRl26\",\n    \"section\": \"7. Related Policies\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Employee Handbook (Fictional)\\nSection: 7. Related Policies\\n\\nSee also: Pre-boarding & Documentation Policy, BGV Policy, Payroll & Benefits Policy,\\nRemote Work Policy, Day-1/Office Policy, IT & Security Policy, and Leave Policy.\"\n  },\n  {\n    \"chunk_id\": \"bd54aa4d-6156-5443-94dd-b329ba214d31\",\n    \"document_id\": \"preboarding_documentation_policy\",\n    \"document_name\": \"preboarding_documentation_policy.md\",\n    \"drive_file_id\": \"1-GIwXc_qwLTwLwdMDw_fPo0Jw_Hxxif4\",\n    \"section\": \"1. Purpose\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Pre-boarding & Documentation Policy (Fictional)\\nSection: 1. Purpose\\n\\nDefines the documents every new hire must submit before or on their joining date,\\nand the timeline for doing so.\"\n  },\n  {\n    \"chunk_id\": \"2c8632a6-2c50-58ca-b46d-4bed442475b2\",\n    \"document_id\": \"preboarding_documentation_policy\",\n    \"document_name\": \"preboarding_documentation_policy.md\",\n    \"drive_file_id\": \"1-GIwXc_qwLTwLwdMDw_fPo0Jw_Hxxif4\",\n    \"section\": \"2. Standard Timeline\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Pre-boarding & Documentation Policy (Fictional)\\nSection: 2. Standard Timeline\\n\\nPre-boarding begins immediately after offer acceptance and should conclude by the\\njoining date (typically a 15-day window). Documents are grouped into the categories\\ndefined in `data/onboarding/onboarding_requirements.json`: Personal Information,\\nIdentity Documents, Education, Current Employment, Previous Employment,\\nPayroll/Bank Information, PF/UAN, Benefits/Insurance, and Compliance.\"\n  },\n  {\n    \"chunk_id\": \"7d950f8a-9b8e-527a-af20-5fc2e7e31072\",\n    \"document_id\": \"preboarding_documentation_policy\",\n    \"document_name\": \"preboarding_documentation_policy.md\",\n    \"drive_file_id\": \"1-GIwXc_qwLTwLwdMDw_fPo0Jw_Hxxif4\",\n    \"section\": \"3. Fresher vs. Experienced Hire\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Pre-boarding & Documentation Policy (Fictional)\\nSection: 3. Fresher vs. Experienced Hire\\n\\n- **Freshers** are not required to submit Current/Previous Employment documents\\n  (REQ-CUR-*, REQ-PREV-*) or a UAN (REQ-PF-01), since they have no prior employment.\\n- **Experienced hires** must submit all Current Employment documents, and Previous\\n  Employment documents if they have more than one prior employer.\"\n  },\n  {\n    \"chunk_id\": \"6e460ba3-c2f1-50a6-b069-a95def597496\",\n    \"document_id\": \"preboarding_documentation_policy\",\n    \"document_name\": \"preboarding_documentation_policy.md\",\n    \"drive_file_id\": \"1-GIwXc_qwLTwLwdMDw_fPo0Jw_Hxxif4\",\n    \"section\": \"4. Escalation\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Pre-boarding & Documentation Policy (Fictional)\\nSection: 4. Escalation\\n\\nIf a mandatory document is not submitted within 3 business days of its due date,\\nthe assigned People Ops partner sends a reminder. If still outstanding within\\n2 business days of the joining date, the case is escalated to the People Ops\\nManager, and the joining date review is flagged.\"\n  },\n  {\n    \"chunk_id\": \"0dd098eb-4224-543b-a427-948f0fbd565a\",\n    \"document_id\": \"preboarding_documentation_policy\",\n    \"document_name\": \"preboarding_documentation_policy.md\",\n    \"drive_file_id\": \"1-GIwXc_qwLTwLwdMDw_fPo0Jw_Hxxif4\",\n    \"section\": \"5. Document Review Statuses\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Pre-boarding & Documentation Policy (Fictional)\\nSection: 5. Document Review Statuses\\n\\nEach submitted document is tracked as one of: **Complete**, **Missing**,\\n**Under Review** (submitted but flagged for clarification), or **Incomplete\\nInformation** (partially submitted, e.g. some but not all required pages/months).\"\n  },\n  {\n    \"chunk_id\": \"aca4e32a-3997-5b66-83a0-2b0d0734646b\",\n    \"document_id\": \"bgv_policy\",\n    \"document_name\": \"bgv_policy.md\",\n    \"drive_file_id\": \"1BbqnmLanNj21hpreNU5FYA5swZk5uwd2\",\n    \"section\": \"1. Purpose\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Background Verification (BGV) Policy (Fictional)\\nSection: 1. Purpose\\n\\nAll new hires undergo background verification (BGV) before or shortly after\\njoining, run by our fictional third-party vendor, **TrustVerify Screening\\nServices**.\"\n  },\n  {\n    \"chunk_id\": \"47045b4c-c88a-54a1-b32d-85a8ae2a7eb9\",\n    \"document_id\": \"bgv_policy\",\n    \"document_name\": \"bgv_policy.md\",\n    \"drive_file_id\": \"1BbqnmLanNj21hpreNU5FYA5swZk5uwd2\",\n    \"section\": \"2. Scope\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Background Verification (BGV) Policy (Fictional)\\nSection: 2. Scope\\n\\n- **Experienced hires**: employment history verification (current and previous\\n  employers), education verification, and identity verification.\\n- **Freshers**: education verification and identity verification only.\"\n  },\n  {\n    \"chunk_id\": \"a498282f-a32b-57ab-86ef-2f0030eb9acb\",\n    \"document_id\": \"bgv_policy\",\n    \"document_name\": \"bgv_policy.md\",\n    \"drive_file_id\": \"1BbqnmLanNj21hpreNU5FYA5swZk5uwd2\",\n    \"section\": \"3. Process\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Background Verification (BGV) Policy (Fictional)\\nSection: 3. Process\\n\\n1. Employee signs the BGV Consent Form (REQ-COMP-01).\\n2. TrustVerify Screening Services requests supporting documents (relieving\\n   letters, experience certificates, payslips, education certificates).\\n3. TrustVerify cross-checks dates and details across documents.\\n4. Any discrepancy (e.g., mismatched employment dates, mismatched names across\\n   documents) is flagged as **Under Review** and escalated to the assigned\\n   People Ops partner.\\n5. BGV is marked **Completed** only when all checks pass with no open flags.\"\n  },\n  {\n    \"chunk_id\": \"6dc8f725-2a64-5c03-9f54-624b8c7fa903\",\n    \"document_id\": \"bgv_policy\",\n    \"document_name\": \"bgv_policy.md\",\n    \"drive_file_id\": \"1BbqnmLanNj21hpreNU5FYA5swZk5uwd2\",\n    \"section\": \"4. Discrepancy Handling\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Background Verification (BGV) Policy (Fictional)\\nSection: 4. Discrepancy Handling\\n\\nA flagged discrepancy does not automatically block employment, but it does:\\n\\n- Pause final BGV sign-off until resolved.\\n- Get logged as a follow-up task owned by People Ops.\\n- Get escalated to the People Ops Manager if unresolved for more than 10\\n  business days after joining.\"\n  },\n  {\n    \"chunk_id\": \"70a1e381-30df-541d-90a9-2c82f996b8dc\",\n    \"document_id\": \"bgv_policy\",\n    \"document_name\": \"bgv_policy.md\",\n    \"drive_file_id\": \"1BbqnmLanNj21hpreNU5FYA5swZk5uwd2\",\n    \"section\": \"5. Payroll Interaction\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Background Verification (BGV) Policy (Fictional)\\nSection: 5. Payroll Interaction\\n\\nIf BGV is unresolved past the second payroll cycle, Finance flags the employee's\\npayroll file for review, but continues to run payroll unless directed otherwise\\nby People Ops leadership.\"\n  },\n  {\n    \"chunk_id\": \"8391cb94-dd38-53d1-b736-573101322754\",\n    \"document_id\": \"payroll_benefits_policy\",\n    \"document_name\": \"payroll_benefits_policy.md\",\n    \"drive_file_id\": \"1lPl7qaAX2fHu3sb2qH4LjZnLjXjk685f\",\n    \"section\": \"1. Payroll Cycle\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Payroll & Benefits Policy (Fictional)\\nSection: 1. Payroll Cycle\\n\\nSalary is credited monthly, on the last working day of each month, via bank\\ntransfer.\"\n  },\n  {\n    \"chunk_id\": \"1017e9d1-19e1-5659-b51e-14a81281608f\",\n    \"document_id\": \"payroll_benefits_policy\",\n    \"document_name\": \"payroll_benefits_policy.md\",\n    \"drive_file_id\": \"1lPl7qaAX2fHu3sb2qH4LjZnLjXjk685f\",\n    \"section\": \"2. Requirements to Set Up Payroll\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Payroll & Benefits Policy (Fictional)\\nSection: 2. Requirements to Set Up Payroll\\n\\nPayroll cannot be configured for a new hire until:\\n\\n- Bank Account Details Form (REQ-PAY-01) is submitted and verified.\\n- Bank Proof (REQ-PAY-02) is submitted.\\n- PF Nomination Form (REQ-PF-02) is submitted (all employees).\\n- UAN Number (REQ-PF-01) is submitted, for experienced hires with prior PF history.\\n\\nIf any of the above is missing by the joining date, the employee's first payroll\\ncycle is delayed until the following cycle.\"\n  },\n  {\n    \"chunk_id\": \"1356987a-93b6-5db4-92b0-972de8d5ee41\",\n    \"document_id\": \"payroll_benefits_policy\",\n    \"document_name\": \"payroll_benefits_policy.md\",\n    \"drive_file_id\": \"1lPl7qaAX2fHu3sb2qH4LjZnLjXjk685f\",\n    \"section\": \"3. Benefits Enrollment\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Payroll & Benefits Policy (Fictional)\\nSection: 3. Benefits Enrollment\\n\\nAll employees are enrolled in the group health insurance plan through\\n**SecureHealth Insurance** (fictional provider) after submitting the Health\\nInsurance Enrollment Form (REQ-BEN-01). Dependent details (REQ-BEN-02) are\\noptional and can be added at any time during the year.\"\n  },\n  {\n    \"chunk_id\": \"3345ad1d-78ba-543b-ba35-10c7cf32cec6\",\n    \"document_id\": \"payroll_benefits_policy\",\n    \"document_name\": \"payroll_benefits_policy.md\",\n    \"drive_file_id\": \"1lPl7qaAX2fHu3sb2qH4LjZnLjXjk685f\",\n    \"section\": \"4. Compensation Confidentiality\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Payroll & Benefits Policy (Fictional)\\nSection: 4. Compensation Confidentiality\\n\\nCompensation details are confidential between the employee, People Ops, and\\nFinance, and are not shared with managers unless required for approvals.\"\n  },\n  {\n    \"chunk_id\": \"1576b334-9c37-5bed-9e07-c91d5da23290\",\n    \"document_id\": \"remote_work_policy\",\n    \"document_name\": \"remote_work_policy.md\",\n    \"drive_file_id\": \"1JDajHPe0Sh747NopoJFd5YZnbHlQNs1l\",\n    \"section\": \"1. Remote Hub Cities\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Remote Work Policy (Fictional)\\nSection: 1. Remote Hub Cities\\n\\nAarohan Technologies currently supports fully remote employees based in three hub\\ncities: Bangalore, Hyderabad, and Mumbai. These cities have no physical Aarohan\\noffice; employees work from home or a co-working space of their choice.\"\n  },\n  {\n    \"chunk_id\": \"997663bc-571b-5eba-9cfd-e808f476fc50\",\n    \"document_id\": \"remote_work_policy\",\n    \"document_name\": \"remote_work_policy.md\",\n    \"drive_file_id\": \"1JDajHPe0Sh747NopoJFd5YZnbHlQNs1l\",\n    \"section\": \"2. Onboarding Differences for Remote Hires\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Remote Work Policy (Fictional)\\nSection: 2. Onboarding Differences for Remote Hires\\n\\nRemote hires complete the same document and compliance requirements as office\\nhires, with these differences:\\n\\n- IT ships a laptop and accessories to the employee's registered address instead\\n  of handing it over in person.\\n- VPN / Remote Access Setup (REQ-IT-03) is mandatory (not required for office\\n  hires, who connect via the office network).\\n- HR Induction, Manager 1:1, and Team Introduction (REQ-DAY1-01 to 03) are held\\n  virtually instead of in person.\\n- Workstation/Desk Setup (REQ-DAY1-04) does not apply.\"\n  },\n  {\n    \"chunk_id\": \"fdc18861-2e68-55e7-95f3-46bdc7ed7aab\",\n    \"document_id\": \"remote_work_policy\",\n    \"document_name\": \"remote_work_policy.md\",\n    \"drive_file_id\": \"1JDajHPe0Sh747NopoJFd5YZnbHlQNs1l\",\n    \"section\": \"3. Equipment\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Remote Work Policy (Fictional)\\nSection: 3. Equipment\\n\\nRemote employees are responsible for a stable internet connection. Aarohan\\nprovides a laptop, headset, and a one-time home-office setup allowance\\n(amount defined separately by Finance, not detailed in this fictional dataset).\"\n  },\n  {\n    \"chunk_id\": \"934e2481-56c8-5bb3-a521-7e723e9d5ead\",\n    \"document_id\": \"remote_work_policy\",\n    \"document_name\": \"remote_work_policy.md\",\n    \"drive_file_id\": \"1JDajHPe0Sh747NopoJFd5YZnbHlQNs1l\",\n    \"section\": \"4. Working Hours & Availability\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Remote Work Policy (Fictional)\\nSection: 4. Working Hours & Availability\\n\\nRemote employees are expected to be reachable during core hours (11:00 AM–4:00 PM\\nIST) for team collaboration, with flexibility outside that window.\"\n  },\n  {\n    \"chunk_id\": \"caa30150-2077-556f-8557-124e12ae2d39\",\n    \"document_id\": \"day1_office_policy\",\n    \"document_name\": \"day1_office_policy.md\",\n    \"drive_file_id\": \"1kdMzakCVY3bALTutrdYWF77EqV67gD0l\",\n    \"section\": \"1. Office Location\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Day-1 / Office Policy (Fictional)\\nSection: 1. Office Location\\n\\nAarohan Technologies' only physical office is at the Pune Headquarters. Employees\\nbased there are expected onsite on Day 1 and follow the standard office schedule\\nthereafter (hybrid flexibility is decided team-by-team, not detailed in this\\nfictional dataset).\"\n  },\n  {\n    \"chunk_id\": \"a4d9f2f0-a54b-57cc-b0c4-414d39b27113\",\n    \"document_id\": \"day1_office_policy\",\n    \"document_name\": \"day1_office_policy.md\",\n    \"drive_file_id\": \"1kdMzakCVY3bALTutrdYWF77EqV67gD0l\",\n    \"section\": \"2. Day-1 Schedule (Office-Based Hires)\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Day-1 / Office Policy (Fictional)\\nSection: 2. Day-1 Schedule (Office-Based Hires)\\n\\n1. Check-in with People Ops, ID badge issuance.\\n2. Workstation / Desk Setup (REQ-DAY1-04).\\n3. HR Induction session (REQ-DAY1-01).\\n4. Manager 1:1 (REQ-DAY1-02).\\n5. Team Introduction (REQ-DAY1-03).\"\n  },\n  {\n    \"chunk_id\": \"8f96ae32-32b2-5c35-a264-eb9a25cbc0ab\",\n    \"document_id\": \"day1_office_policy\",\n    \"document_name\": \"day1_office_policy.md\",\n    \"drive_file_id\": \"1kdMzakCVY3bALTutrdYWF77EqV67gD0l\",\n    \"section\": \"3. Day-1 Schedule (Remote Hires)\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Day-1 / Office Policy (Fictional)\\nSection: 3. Day-1 Schedule (Remote Hires)\\n\\nRemote hires follow the same four sessions (HR Induction, Manager 1:1, Team\\nIntroduction, plus an IT setup call) held virtually — see the Remote Work Policy\\nfor details. Desk setup does not apply.\"\n  },\n  {\n    \"chunk_id\": \"1dc3a756-0660-5c22-8bfb-38f8fed6dd2f\",\n    \"document_id\": \"day1_office_policy\",\n    \"document_name\": \"day1_office_policy.md\",\n    \"drive_file_id\": \"1kdMzakCVY3bALTutrdYWF77EqV67gD0l\",\n    \"section\": \"4. Rescheduling\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Day-1 / Office Policy (Fictional)\\nSection: 4. Rescheduling\\n\\nIf a new hire's Day 1 falls on a company holiday or the assigned People Ops\\npartner is unavailable, HR reschedules the induction session within 2 business\\ndays and notifies the employee's manager.\"\n  },\n  {\n    \"chunk_id\": \"2766b503-084e-53d1-b8f9-57046ef9a8d9\",\n    \"document_id\": \"it_security_policy\",\n    \"document_name\": \"it_security_policy.md\",\n    \"drive_file_id\": \"1Rnc-Pw_iZPlipG5-6LMUmIfKLcWrlhNI\",\n    \"section\": \"1. Asset Provisioning\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — IT & Security Policy (Fictional)\\nSection: 1. Asset Provisioning\\n\\nEvery new hire is issued a company laptop (REQ-IT-01) and company email plus core\\nsystem access (REQ-IT-02) before or on Day 1. Office-based hires receive their\\nlaptop in person; remote hires receive it by courier (see Remote Work Policy).\"\n  },\n  {\n    \"chunk_id\": \"0f263d10-c793-5fbf-8ae2-03e2e01ceb3c\",\n    \"document_id\": \"it_security_policy\",\n    \"document_name\": \"it_security_policy.md\",\n    \"drive_file_id\": \"1Rnc-Pw_iZPlipG5-6LMUmIfKLcWrlhNI\",\n    \"section\": \"2. Access Control\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — IT & Security Policy (Fictional)\\nSection: 2. Access Control\\n\\nSystem access follows least-privilege by default: employees receive access only\\nto the systems required for their role, expanded on request with manager approval.\"\n  },\n  {\n    \"chunk_id\": \"1e77a20b-3556-5362-8f6d-015e1146f978\",\n    \"document_id\": \"it_security_policy\",\n    \"document_name\": \"it_security_policy.md\",\n    \"drive_file_id\": \"1Rnc-Pw_iZPlipG5-6LMUmIfKLcWrlhNI\",\n    \"section\": \"3. VPN & Remote Access\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — IT & Security Policy (Fictional)\\nSection: 3. VPN & Remote Access\\n\\nRemote employees must complete VPN / Remote Access Setup (REQ-IT-03) before\\naccessing internal systems. Office employees connect via the office network and\\ndo not require VPN setup for standard access.\"\n  },\n  {\n    \"chunk_id\": \"475674a8-d3c4-5c7b-bacc-a3e40dfe7e25\",\n    \"document_id\": \"it_security_policy\",\n    \"document_name\": \"it_security_policy.md\",\n    \"drive_file_id\": \"1Rnc-Pw_iZPlipG5-6LMUmIfKLcWrlhNI\",\n    \"section\": \"4. Acceptable Use\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — IT & Security Policy (Fictional)\\nSection: 4. Acceptable Use\\n\\nCompany laptops and accounts are for business use. Employees must not share\\ncredentials, install unauthorized software, or store confidential company data on\\npersonal devices.\"\n  },\n  {\n    \"chunk_id\": \"d54ec00b-5e5f-5bb4-9692-22f90c0d167e\",\n    \"document_id\": \"it_security_policy\",\n    \"document_name\": \"it_security_policy.md\",\n    \"drive_file_id\": \"1Rnc-Pw_iZPlipG5-6LMUmIfKLcWrlhNI\",\n    \"section\": \"5. Offboarding Note\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — IT & Security Policy (Fictional)\\nSection: 5. Offboarding Note\\n\\n(Out of scope for this onboarding-focused dataset — included here only for\\ncompleteness of the fictional policy set.) Asset return and access revocation are\\nhandled by IT within 1 business day of an employee's last working day.\"\n  },\n  {\n    \"chunk_id\": \"b0181bff-bd1b-5a64-8de5-80aabf10de48\",\n    \"document_id\": \"leave_policy\",\n    \"document_name\": \"leave_policy.md\",\n    \"drive_file_id\": \"1pzf0vp7vYm_o1uQgEpHGGNqDJBy5i9_p\",\n    \"section\": \"1. Leave Types\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Leave Policy (Fictional)\\nSection: 1. Leave Types\\n\\n- **Casual Leave**: 12 days/year, for short personal needs.\\n- **Sick Leave**: 10 days/year, for illness or medical appointments.\\n- **Earned/Privilege Leave**: 15 days/year, accrued monthly, for planned time off.\\n- **Public Holidays**: as per the Aarohan holiday calendar (not detailed in this\\n  fictional dataset).\"\n  },\n  {\n    \"chunk_id\": \"0d147975-b468-5cca-95f2-713c381000bb\",\n    \"document_id\": \"leave_policy\",\n    \"document_name\": \"leave_policy.md\",\n    \"drive_file_id\": \"1pzf0vp7vYm_o1uQgEpHGGNqDJBy5i9_p\",\n    \"section\": \"2. Accrual During Onboarding\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Leave Policy (Fictional)\\nSection: 2. Accrual During Onboarding\\n\\nNew hires start accruing Earned Leave from their joining date and can use Casual\\nor Sick Leave from Day 1, subject to manager approval.\"\n  },\n  {\n    \"chunk_id\": \"770f2944-2fae-58ff-98da-0a201141ac50\",\n    \"document_id\": \"leave_policy\",\n    \"document_name\": \"leave_policy.md\",\n    \"drive_file_id\": \"1pzf0vp7vYm_o1uQgEpHGGNqDJBy5i9_p\",\n    \"section\": \"3. Applying for Leave\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Leave Policy (Fictional)\\nSection: 3. Applying for Leave\\n\\nLeave requests are submitted through the (fictional) internal Aarohan People\\nPortal and require manager approval. Sick leave of 3+ consecutive days requires a\\nmedical note.\"\n  },\n  {\n    \"chunk_id\": \"aa4e196e-329b-5ab2-ac15-f3a24c04281e\",\n    \"document_id\": \"leave_policy\",\n    \"document_name\": \"leave_policy.md\",\n    \"drive_file_id\": \"1pzf0vp7vYm_o1uQgEpHGGNqDJBy5i9_p\",\n    \"section\": \"4. Leave During Probation\",\n    \"chunk_text\": \"Aarohan Technologies — Aarohan Technologies — Leave Policy (Fictional)\\nSection: 4. Leave During Probation\\n\\nNew hires may take leave during their 90-day probation period, but are encouraged\\nto coordinate with their manager to minimize disruption to early onboarding\\nmilestones (30-60-90 day check-ins).\"\n  }\n];\n\nreturn chunks.map((c) => ({ json: c }));"
+      }
+    },
+    {
+      "id": "call-gemini-embed-api---chunks",
+      "name": "Call Gemini Embed API - Chunks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        40
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"models/gemini-embedding-001\", \"content\": { \"parts\": [ { \"text\": $json.chunk_text } ] }, \"outputDimensionality\": 768 } }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 1200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "REPLACE_ME - Google Gemini (PaLM) API"
+        }
+      }
+    },
+    {
+      "id": "normalize-chunk-embeddings",
+      "name": "Normalize Chunk Embeddings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        40
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const embeddingObj = $json.embedding || {};\nconst nativeValues = embeddingObj.values || [];\nconst nativeDim = nativeValues.length;\n\nlet sumSq = 0;\nfor (const v of nativeValues) { sumSq += v * v; }\nconst norm = Math.sqrt(sumSq);\nconst normalized = norm > 0 ? nativeValues.map((v) => v / norm) : nativeValues;\n\nconst chunkId = $('Prepare 38 Chunks').item.json.chunk_id;\nconst documentId = $('Prepare 38 Chunks').item.json.document_id;\nconst section = $('Prepare 38 Chunks').item.json.section;\nconst chunkText = $('Prepare 38 Chunks').item.json.chunk_text;\n\nreturn {\n  json: {\n    chunk_id: chunkId,\n    document_id: documentId,\n    section: section,\n    chunk_text: chunkText,\n    native_dimension: nativeDim,\n    embedding_vector_literal: '[' + normalized.join(',') + ']'\n  }\n};"
+      }
+    },
+    {
+      "id": "prepare-5-test-queries",
+      "name": "Prepare 5 Test Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        240
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const queries = [\n  {\n    \"query_id\": \"Q1\",\n    \"query_text\": \"What happens if a background verification discrepancy is found after I have already joined?\"\n  },\n  {\n    \"query_id\": \"Q2\",\n    \"query_text\": \"How many days of leave do I get during my probation period?\"\n  },\n  {\n    \"query_id\": \"Q3\",\n    \"query_text\": \"What equipment will I receive if I am a remote hire?\"\n  },\n  {\n    \"query_id\": \"Q4\",\n    \"query_text\": \"What is the Day-1 schedule for office-based new hires?\"\n  },\n  {\n    \"query_id\": \"Q5\",\n    \"query_text\": \"Who should I escalate to if my pre-boarding documents are delayed?\"\n  }\n];\n\nreturn queries.map((q) => ({ json: q }));"
+      }
+    },
+    {
+      "id": "call-gemini-embed-api---queries",
+      "name": "Call Gemini Embed API - Queries",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"models/gemini-embedding-001\", \"content\": { \"parts\": [ { \"text\": $json.query_text } ] }, \"outputDimensionality\": 768 } }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 1200
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "REPLACE_ME - Google Gemini (PaLM) API"
+        }
+      }
+    },
+    {
+      "id": "normalize-query-embeddings",
+      "name": "Normalize Query Embeddings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        240
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const embeddingObj = $json.embedding || {};\nconst nativeValues = embeddingObj.values || [];\nconst nativeDim = nativeValues.length;\n\nlet sumSq = 0;\nfor (const v of nativeValues) { sumSq += v * v; }\nconst norm = Math.sqrt(sumSq);\nconst normalized = norm > 0 ? nativeValues.map((v) => v / norm) : nativeValues;\n\nconst queryId = $('Prepare 5 Test Queries').item.json.query_id;\nconst queryText = $('Prepare 5 Test Queries').item.json.query_text;\n\nreturn {\n  json: {\n    query_id: queryId,\n    query_text: queryText,\n    native_dimension: nativeDim,\n    embedding_vector_literal: '[' + normalized.join(',') + ']'\n  }\n};"
+      }
+    }
+  ],
+  "connections": {
+    "Start Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Prepare 8 Documents",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare 38 Chunks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare 5 Test Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare 38 Chunks": {
+      "main": [
+        [
+          {
+            "node": "Call Gemini Embed API - Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Gemini Embed API - Chunks": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chunk Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare 5 Test Queries": {
+      "main": [
+        [
+          {
+            "node": "Call Gemini Embed API - Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Gemini Embed API - Queries": {
+      "main": [
+        [
+          {
+            "node": "Normalize Query Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id BQbUszddFMJ6IhtT. Credentials stripped.",
+    "description": "Embeds 8 docs / 38 chunks + 5 test queries via Gemini (768-dim), normalizes. Supabase writes run outside n8n."
+  },
+  "active": false,
+  "pinData": {}
+}

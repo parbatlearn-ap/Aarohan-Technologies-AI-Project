@@ -1,0 +1,162 @@
+{
+  "name": "OnboardAI - Policy Intelligence Engine (Logic)",
+  "nodes": [
+    {
+      "id": "receive-question",
+      "name": "Receive Question",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "question",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "embed-question-gemini",
+      "name": "Embed Question (Gemini)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"models/gemini-embedding-001\", \"content\": { \"parts\": [ { \"text\": $json.question } ] }, \"outputDimensionality\": 768 } }}",
+        "options": {}
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "REPLACE_ME - Google Gemini (PaLM) API"
+        }
+      }
+    },
+    {
+      "id": "normalize-question-embedding",
+      "name": "Normalize Question Embedding",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const embeddingObj = $json.embedding || {};\nconst nativeValues = embeddingObj.values || [];\nlet sumSq = 0;\nfor (const v of nativeValues) { sumSq += v * v; }\nconst norm = Math.sqrt(sumSq);\nconst normalized = norm > 0 ? nativeValues.map((v) => v / norm) : nativeValues;\n\nconst question = $('Receive Question').item.json.question;\n\nreturn {\n  json: {\n    question: question,\n    native_dimension: nativeValues.length,\n    embedding_vector_literal: '[' + normalized.join(',') + ']'\n  }\n};"
+      }
+    },
+    {
+      "id": "query-policy-chunks",
+      "name": "Query Policy Chunks (Supabase)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT document_id, section, chunk_text, (embedding <=> $1::vector) AS distance FROM policy_chunks ORDER BY distance LIMIT 5;",
+        "options": {
+          "queryReplacement": "={{ $json.embedding_vector_literal }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "",
+          "name": "REPLACE_ME - Supabase Postgres (session pooler)"
+        }
+      }
+    },
+    {
+      "id": "evidence-&-confidence-logic",
+      "name": "Evidence & Confidence Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const rows = $input.all().map(i => i.json);\n\nif (!rows || rows.length === 0) {\n  return [{\n    json: {\n      answer: \"This could not be found in the available Aarohan policy corpus. Please contact People Ops for guidance.\",\n      source_document: null,\n      source_section: null,\n      similarity: 0,\n      confidence: \"low\",\n      human_review_required: true,\n      reason: \"No policy chunks were returned by the retrieval query.\"\n    }\n  }];\n}\n\nconst question = $('Receive Question').item.json.question || '';\n\n// --- Thresholds (documented, calibrated from Step 11C's real retrieval numbers) ---\nconst INSUFFICIENT_EVIDENCE_FLOOR = 0.60; // below this raw similarity, treat as no match at all\nconst HIGH_CONFIDENCE_FLOOR = 0.70;       // observed floor of genuine top-1 matches in Step 11C\nconst AMBIGUOUS_MARGIN = 0.03;            // narrow top1/top2 margin band, also from Step 11C\nconst COVERAGE_FLOOR = 0.5;               // >=50% of the question's salient terms must appear in the\n                                           // selected evidence, or it is not treated as a supported answer\n\n// --- Deterministic text helpers (no LLM call; explainable, fixed rules) ---\nconst STOPWORDS = new Set([\n  \"what\",\"who\",\"how\",\"many\",\"will\",\"if\",\"my\",\"i\",\"am\",\"a\",\"an\",\"the\",\"is\",\"are\",\"do\",\"does\",\"did\",\n  \"of\",\"to\",\"for\",\"in\",\"on\",\"and\",\"or\",\"at\",\"as\",\"be\",\"get\",\"gets\",\"should\",\"already\",\"after\",\"before\",\n  \"during\",\"this\",\"that\",\"their\",\"they\",\"it\",\"its\",\"have\",\"has\",\"had\",\"can\",\"could\",\"would\",\"when\",\n  \"where\",\"why\",\"new\",\"hire\",\"hires\",\"hired\",\"employee\",\"employees\",\"days\",\"day\",\"happen\",\"happens\",\n  \"found\",\"receive\"\n]);\n// Words that appear in almost every chunk's own document header\n// (\"Aarohan Technologies — ... <Doc> Policy (Fictional)\\nSection: ...\") and therefore\n// carry no discriminating power on their own.\nconst CORPUS_HEADER_TERMS = new Set([\"aarohan\",\"technologies\",\"policy\",\"fictional\",\"section\"]);\n\nfunction tokenize(text) {\n  return (text || \"\")\n    .toLowerCase()\n    .replace(/[^a-z0-9\\s-]/g, \" \")\n    .split(/[\\s-]+/)\n    .filter(Boolean);\n}\n\nfunction stem(w) {\n  const suffixes = [\"ational\", \"ization\", \"ing\", \"edly\", \"ed\", \"es\", \"s\"];\n  for (const suf of suffixes) {\n    if (w.length - suf.length >= 4 && w.endsWith(suf)) return w.slice(0, -suf.length);\n  }\n  return w;\n}\n\nfunction salientWords(text) {\n  const toks = tokenize(text);\n  const out = [];\n  const seen = new Set();\n  for (const w of toks) {\n    const s = stem(w);\n    if (STOPWORDS.has(w) || STOPWORDS.has(s)) continue;\n    if (CORPUS_HEADER_TERMS.has(w) || CORPUS_HEADER_TERMS.has(s)) continue;\n    if (w.length < 3) continue;\n    if (!seen.has(s)) { seen.add(s); out.push(s); }\n  }\n  return out;\n}\n\nfunction stemMatch(qWord, hToken) {\n  const hs = stem(hToken);\n  if (qWord === hs) return true;\n  const minLen = Math.min(qWord.length, hs.length);\n  if (minLen >= 4 && qWord.slice(0, 4) === hs.slice(0, 4) &&\n      (qWord.startsWith(hs) || hs.startsWith(qWord))) return true;\n  return false;\n}\n\nfunction containsWord(haystack, word) {\n  const hToks = tokenize(haystack);\n  return hToks.some(h => stemMatch(word, h));\n}\n\nfunction coverage(words, text) {\n  const matched = words.filter(w => containsWord(text, w));\n  const missing = words.filter(w => !matched.includes(w));\n  const ratio = matched.length / Math.max(1, words.length);\n  return { ratio, matched, missing };\n}\n\nfunction sectionTitleText(section) {\n  return (section || \"\").replace(/^\\d+\\.\\s*/, \"\");\n}\n\n// --- Step 1: similarity + contention set (candidates within AMBIGUOUS_MARGIN of top-1) ---\nconst withSimilarity = rows.map(r => Object.assign({}, r, { similarity: 1 - r.distance }));\nwithSimilarity.sort((a, b) => b.similarity - a.similarity);\nconst top1 = withSimilarity[0];\nconst contention = withSimilarity.filter(r => (top1.similarity - r.similarity) <= AMBIGUOUS_MARGIN);\n\n// --- Step 2: question's salient (concept-bearing) words ---\nconst qWords = salientWords(question);\n\n// --- Step 3: section-level specificity re-rank within the contention set only.\n// \"Same document\" is NOT used as a signal anywhere below -- only how well each\n// candidate's OWN section title matches the question's salient terms, normalized\n// by title length (so a short, exact-match title like \"Equipment\" beats a longer,\n// loosely-related title like \"Onboarding Differences for Remote Hires\"). ---\nfor (const c of contention) {\n  const title = sectionTitleText(c.section);\n  const titleWords = tokenize(title).filter(w => !STOPWORDS.has(w));\n  const matches = qWords.filter(w => containsWord(title, w));\n  c.title_match_count = matches.length;\n  c.title_match_ratio = matches.length / Math.max(1, titleWords.length);\n}\nconst maxRatio = Math.max(...contention.map(c => c.title_match_ratio));\nconst winners = contention.filter(c => Math.abs(c.title_match_ratio - maxRatio) < 1e-9);\nconst specificityDecisive = maxRatio > 0 && winners.length === 1;\nconst selected = specificityDecisive ? winners[0] : top1;\n\nconst others = contention.filter(c => c !== selected);\nlet nextBest = others.length > 0\n  ? others.reduce((a, b) => (a.similarity > b.similarity ? a : b))\n  : withSimilarity.find(r => r !== selected) || null;\nconst margin = nextBest ? selected.similarity - nextBest.similarity : 1;\n\n// --- Step 4: concept coverage check against the SELECTED evidence's own chunk_text.\n// This is the primary gate against \"generic keyword overlap\" false positives\n// (e.g. a question about parental leave matching on the word \"leave\" alone). ---\nconst { ratio: coverageRatio, missing: missingTerms } = coverage(qWords, selected.chunk_text || \"\");\n\n// --- Step 5: decision ---\nlet confidence, humanReviewRequired, answer, sourceDocument, sourceSection, reason;\n\nif (coverageRatio < COVERAGE_FLOOR) {\n  confidence = \"low\";\n  humanReviewRequired = true;\n  answer = \"This could not be found in the available Aarohan policy corpus. Please contact People Ops for guidance.\";\n  sourceDocument = selected.document_id;\n  sourceSection = selected.section;\n  reason = \"The closest retrieved evidence (\" + selected.document_id + \" / \" + selected.section +\n    \") only shares generic terms with the question and does not cover its specific terms: [\" +\n    missingTerms.join(\", \") + \"]. Treating this as not covered by the policy corpus rather than \" +\n    \"presenting a non-responsive chunk as an answer.\";\n} else if (selected.similarity < INSUFFICIENT_EVIDENCE_FLOOR) {\n  confidence = \"low\";\n  humanReviewRequired = true;\n  answer = \"This could not be found in the available Aarohan policy corpus. Please contact People Ops for guidance.\";\n  sourceDocument = null;\n  sourceSection = null;\n  reason = \"Best match similarity (\" + selected.similarity.toFixed(3) + \") is below the \" +\n    INSUFFICIENT_EVIDENCE_FLOOR + \" evidence floor.\";\n} else if (selected.similarity >= HIGH_CONFIDENCE_FLOOR && (margin >= AMBIGUOUS_MARGIN || specificityDecisive)) {\n  confidence = \"high\";\n  humanReviewRequired = false;\n  answer = selected.chunk_text;\n  sourceDocument = selected.document_id;\n  sourceSection = selected.section;\n  reason = specificityDecisive && margin < AMBIGUOUS_MARGIN\n    ? \"Similarity \" + selected.similarity.toFixed(3) + \" meets the high-confidence floor, and this \" +\n      \"section's title uniquely and specifically matches the question's own terms among the \" +\n      \"near-tied candidates, resolving what would otherwise be a narrow-margin ambiguity.\"\n    : \"Similarity \" + selected.similarity.toFixed(3) + \" meets the high-confidence floor with a clear \" +\n      \"margin (\" + margin.toFixed(3) + \") over the next-best candidate, and the retrieved text covers \" +\n      \"the question's specific terms.\";\n} else {\n  confidence = \"medium\";\n  humanReviewRequired = true;\n  answer = selected.chunk_text;\n  sourceDocument = selected.document_id;\n  sourceSection = selected.section;\n  reason = \"Similarity \" + selected.similarity.toFixed(3) + \" is reasonable and the retrieved text covers \" +\n    \"the question's specific terms, but the margin to the next-best candidate (\" + margin.toFixed(3) +\n    \") is narrow and no single section title is a clearly better match -- flagging for human \" +\n    \"confirmation rather than asserting one section with full confidence.\";\n}\n\nreturn [{\n  json: {\n    answer: answer,\n    source_document: sourceDocument,\n    source_section: sourceSection,\n    similarity: Math.round(selected.similarity * 1000) / 1000,\n    confidence: confidence,\n    human_review_required: humanReviewRequired,\n    reason: reason\n  }\n}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Receive Question": {
+      "main": [
+        [
+          {
+            "node": "Embed Question (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Question (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Question Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Question Embedding": {
+      "main": [
+        [
+          {
+            "node": "Query Policy Chunks (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Policy Chunks (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Evidence & Confidence Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id GVPn10p2N8LBXQ4n. Credentials stripped.",
+    "description": "RAG: Gemini embedding -> Supabase pgvector top-5 -> deterministic evidence/confidence gating."
+  },
+  "active": false,
+  "pinData": {}
+}

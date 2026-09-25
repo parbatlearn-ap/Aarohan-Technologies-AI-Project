@@ -1,0 +1,84 @@
+{
+  "name": "OnboardAI - Policy Intelligence MCP",
+  "nodes": [
+    {
+      "id": "mcp-trigger",
+      "name": "OnboardAI Policy Intelligence MCP",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        112
+      ],
+      "parameters": {
+        "path": "onboardai-policy-intelligence",
+        "authentication": "none",
+        "instructions": "This MCP server exposes one tool, answer_policy_question, for the OnboardAI (Aarohan Technologies) project. Use it to answer employee/HR policy questions from the existing synthetic policy corpus. It returns a structured JSON result (answer, source_document, source_section, similarity, confidence, human_review_required, reason). If human_review_required is true, tell the user to contact People Ops rather than treating the answer as final."
+      },
+      "webhookId": "8554cbcc-3571-4d69-a5a5-82d5710eff9d"
+    },
+    {
+      "id": "tool",
+      "name": "answer_policy_question",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        336
+      ],
+      "parameters": {
+        "description": "Answers employee HR/policy questions about Aarohan Technologies using the existing synthetic policy corpus and Supabase vector index (RAG). Returns a structured result with the answer text, its source document/section, a similarity score, a confidence rating (high/medium/low), and a human_review_required flag. Refuses to invent an answer and recommends contacting People Ops when the policy corpus does not adequately cover the question.",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "GVPn10p2N8LBXQ4n",
+          "__comment": "REMAP to the new id of the imported Engine (Logic) workflow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "question": "={{ $fromAI('question', \"The employee HR/policy question to answer, e.g. \\\"What happens if an employee takes leave during probation?\\\"\", 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "question",
+              "displayName": "question",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "answer_policy_question": {
+      "ai_tool": [
+        [
+          {
+            "node": "OnboardAI Policy Intelligence MCP",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id dP1Gxsv0tGFe6Dww. Credentials stripped.",
+    "description": "Custom MCP #1. MCP Server Trigger exposing answer_policy_question -> Policy Intelligence Engine."
+  },
+  "active": false,
+  "pinData": {}
+}

@@ -1,0 +1,84 @@
+{
+  "name": "OnboardAI - Policy Lookup MCP",
+  "nodes": [
+    {
+      "id": "mcp-trigger",
+      "name": "OnboardAI Policy Lookup MCP",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        112
+      ],
+      "parameters": {
+        "path": "onboardai-policy-lookup",
+        "authentication": "none",
+        "instructions": "This MCP server exposes one tool, get_policy, for the OnboardAI (Aarohan Technologies) project. Given a policy topic or free-text question, it returns a structured JSON snapshot: policy_topic, title, answer (the policy text), source_document, and status (Found / Not Found). If status is \"Not Found\", no matching Aarohan policy exists for that topic — tell the user rather than inventing an answer. Always cite source_document when presenting the answer."
+      },
+      "webhookId": "82ae5a4c-4c29-4ab7-8bd8-17e27fc93c1d"
+    },
+    {
+      "id": "tool",
+      "name": "get_policy",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        336
+      ],
+      "parameters": {
+        "description": "Given a policy topic or a free-text question (e.g. \"remote_work\", \"how many PTO days do I get\", \"grievance process\"), looks up the matching Aarohan Technologies policy from the OnboardAI Policies Data Table. Returns policy_topic, title, answer (the policy text), source_document, and status (\"Found\" or \"Not Found\"). If status is \"Not Found\", tell the user no matching policy exists rather than inventing an answer.",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "0S2phE22QitULuk9",
+          "__comment": "REMAP to the new id of the imported Engine (Logic) workflow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "topic": "={{ $fromAI('topic', \"Policy topic or question to look up (for example \\\"remote_work\\\" or \\\"how many PTO days do I get\\\")\", 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "get_policy": {
+      "ai_tool": [
+        [
+          {
+            "node": "OnboardAI Policy Lookup MCP",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id 9gzB5ufnnosPrS9b. Credentials stripped.",
+    "description": "MCP Server Trigger exposing get_policy -> Policy Lookup Engine."
+  },
+  "active": false,
+  "pinData": {}
+}

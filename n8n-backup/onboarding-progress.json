@@ -1,0 +1,193 @@
+{
+  "name": "OnboardAI - Onboarding Progress Engine (Logic)",
+  "nodes": [
+    {
+      "id": "onboarding-progress-trigger",
+      "name": "Onboarding Progress Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "employee_id",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "get-employee-row",
+      "name": "Get Employee Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "rE0SYvDEpq8ZDGzR"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "employeeId",
+              "condition": "eq",
+              "keyValue": "={{ $('Onboarding Progress Trigger').item.json.employee_id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "get-task-rows",
+      "name": "Get Task Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "UrT5HV43x3HX6ZvY"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "employeeId",
+              "condition": "eq",
+              "keyValue": "={{ $('Onboarding Progress Trigger').item.json.employee_id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "get-document-rows",
+      "name": "Get Document Rows",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "duVEApIHmfhTR5JE"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "employeeId",
+              "condition": "eq",
+              "keyValue": "={{ $('Onboarding Progress Trigger').item.json.employee_id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "compute-onboarding-status",
+      "name": "Compute Onboarding Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const employeeRows = $('Get Employee Row').all().map(i => i.json).filter(r => r.employeeId);\nconst taskRows = $('Get Task Rows').all().map(i => i.json).filter(r => r.employeeId);\nconst documentRows = $('Get Document Rows').all().map(i => i.json).filter(r => r.employeeId);\nconst employeeId = $('Onboarding Progress Trigger').item.json.employee_id;\n\nif (!employeeRows.length) {\n  return [{\n    json: {\n      employee_id: employeeId,\n      employee_name: null,\n      completion_percentage: null,\n      status: 'Not Found',\n      completed: 0,\n      pending: 0,\n      overdue: 0,\n      blockers: [],\n      next_priorities: [],\n      bgv_status: null,\n      payroll_status: null,\n      reason: 'No onboarding record found for employee_id \"' + employeeId + '\".'\n    }\n  }];\n}\n\nconst employee = employeeRows[0];\nconst todayISO = $now.toISODate();\nconst priorityRank = { high: 0, medium: 1, low: 2 };\nconst isOverdue = (t) => t.status !== 'done' && t.dueDate < todayISO;\n\nconst completedTasks = taskRows.filter(t => t.status === 'done');\nconst overdueTasks = taskRows.filter(isOverdue);\nconst pendingTasks = taskRows.filter(t => t.status !== 'done' && !isOverdue(t));\nconst totalTasks = taskRows.length;\nconst completionPercentage = totalTasks ? Math.round((completedTasks.length / totalTasks) * 100) : 0;\n\nconst missingDocs = documentRows.filter(d => d.status === 'missing');\nconst underReviewDocs = documentRows.filter(d => d.status === 'under_review');\n\nconst blockers = [];\nif (employee.bgvStatus === 'Discrepancy' || employee.bgvStatus === 'Blocked') {\n  blockers.push('BGV ' + employee.bgvStatus.toLowerCase() + ' — verification is stalled and needs People Ops / TrustVerify follow-up.');\n}\nif (employee.payrollStatus === 'Not Started' && employee.bgvStatus !== 'Cleared') {\n  blockers.push('Payroll setup cannot start until BGV clears.');\n}\nfor (const d of missingDocs) blockers.push('Missing document: ' + d.documentName);\nfor (const d of underReviewDocs) blockers.push('Document under review: ' + d.documentName);\nfor (const t of overdueTasks) blockers.push('Overdue task (' + t.priority + ' priority, due ' + t.dueDate + '): ' + t.taskName);\n\nconst prioritized = [...overdueTasks, ...pendingTasks].sort((a, b) => {\n  const overdueA = isOverdue(a) ? 0 : 1;\n  const overdueB = isOverdue(b) ? 0 : 1;\n  if (overdueA !== overdueB) return overdueA - overdueB;\n  const prA = priorityRank[a.priority] ?? 3;\n  const prB = priorityRank[b.priority] ?? 3;\n  if (prA !== prB) return prA - prB;\n  return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0;\n});\nconst nextPriorities = prioritized.slice(0, 3).map(t => t.taskName + ' (due ' + t.dueDate + (isOverdue(t) ? ', overdue' : '') + ')');\n\nlet status;\nif (completionPercentage === 100 && employee.bgvStatus === 'Cleared' && employee.payrollStatus === 'Active') {\n  status = 'Complete';\n} else if (employee.bgvStatus === 'Discrepancy' || employee.bgvStatus === 'Blocked') {\n  status = 'Blocked';\n} else if (overdueTasks.length > 0 || missingDocs.length > 0 || underReviewDocs.length > 0) {\n  status = 'Needs Attention';\n} else {\n  status = 'On Track';\n}\n\nreturn [{\n  json: {\n    employee_id: employee.employeeId,\n    employee_name: employee.employeeName,\n    completion_percentage: completionPercentage,\n    status,\n    completed: completedTasks.length,\n    pending: pendingTasks.length,\n    overdue: overdueTasks.length,\n    blockers,\n    next_priorities: nextPriorities,\n    bgv_status: employee.bgvStatus,\n    payroll_status: employee.payrollStatus\n  }\n}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Onboarding Progress Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Employee Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Employee Row": {
+      "main": [
+        [
+          {
+            "node": "Get Task Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Task Rows": {
+      "main": [
+        [
+          {
+            "node": "Get Document Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document Rows": {
+      "main": [
+        [
+          {
+            "node": "Compute Onboarding Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id Y0QrAkmB5sG9b0K6. Credentials stripped.",
+    "description": "Given employee_id, computes completion %, status, blockers and next priorities from the OnboardAI Data Tables."
+  },
+  "active": false,
+  "pinData": {}
+}

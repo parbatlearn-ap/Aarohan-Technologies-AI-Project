@@ -1,0 +1,149 @@
+{
+  "name": "OnboardAI - Policy Lookup Engine (Logic)",
+  "nodes": [
+    {
+      "id": "policy-lookup-trigger",
+      "name": "Policy Lookup Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "topic",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "get-policy-by-topic",
+      "name": "Get Policy By Topic",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "dnmeCejlY1E7SR3C"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "topic",
+              "condition": "eq",
+              "keyValue": "={{ $('Policy Lookup Trigger').item.json.topic }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "get-all-policies",
+      "name": "Get All Policies",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "dnmeCejlY1E7SR3C"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "topic",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "compute-policy-answer",
+      "name": "Compute Policy Answer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const topicInput = ($('Policy Lookup Trigger').item.json.topic || '').toString().trim();\nconst exactRows = $('Get Policy By Topic').all().map(i => i.json).filter(r => r.topic);\nconst allRows = $('Get All Policies').all().map(i => i.json).filter(r => r.topic);\n\nconst DOC_LINKS = {\n  'Aarohan_Remote_Work_Policy_v2.3.pdf': 'https://drive.google.com/file/d/1sNCdocmQk3utnF8t_xuSjyHCsR9pK0ZT/view?usp=drivesdk',\n  'Aarohan_Leave_Policy_v4.1.pdf': 'https://drive.google.com/file/d/1Mlll2CpBbO6lfPXd-ks7FWGZ5FqWmrRk/view?usp=drivesdk',\n  'Aarohan_Benefits_Enrollment_Policy_v1.8.pdf': 'https://drive.google.com/file/d/1zcWU6n-zvz0acofh215IVLuWJxlGbqfP/view?usp=drivesdk',\n  'Aarohan_Working_Hours_Policy_v2.0.pdf': 'https://drive.google.com/file/d/16hEZo_cQZUdpGupv3aRn2eIVPbWS4Qlh/view?usp=drivesdk',\n  'Aarohan_Grievance_Escalation_Policy_v1.5.pdf': 'https://drive.google.com/file/d/1qkB3IoeJQCUzuppe7qdQdsmN2NNYnjYV/view?usp=drivesdk'\n};\n\nfunction toResult(row) {\n  return {\n    json: {\n      policy_topic: row.topic,\n      title: row.title,\n      answer: row.body,\n      source_document: DOC_LINKS[row.sourceDocument] || row.sourceDocument,\n      status: 'Found'\n    }\n  };\n}\n\nif (exactRows.length) {\n  return [toResult(exactRows[0])];\n}\n\nconst stopwords = ['the','a','an','is','are','do','does','did','i','my','me','to','of','for','in','on','at','and','or','how','what','when','where','why','can','get','many','much','you','your','need','about'];\nconst needleWords = topicInput\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s_]/g, ' ')\n  .split(/\\s+/)\n  .filter(w => w.length >= 3 && stopwords.indexOf(w) === -1);\n\nlet bestRow = null;\nlet bestScore = 0;\nfor (const row of allRows) {\n  const haystack = ((row.topic || '') + ' ' + (row.title || '') + ' ' + (row.body || '')).toLowerCase();\n  let score = 0;\n  for (const w of needleWords) {\n    const occurrences = haystack.split(w).length - 1;\n    score = score + occurrences;\n  }\n  if (score > bestScore) {\n    bestScore = score;\n    bestRow = row;\n  }\n}\n\nif (bestRow && bestScore > 0) {\n  return [toResult(bestRow)];\n}\n\nreturn [{\n  json: {\n    policy_topic: topicInput || null,\n    title: null,\n    answer: null,\n    source_document: null,\n    status: 'Not Found'\n  }\n}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Policy Lookup Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Policy By Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Policy By Topic": {
+      "main": [
+        [
+          {
+            "node": "Get All Policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Policies": {
+      "main": [
+        [
+          {
+            "node": "Compute Policy Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id 0S2phE22QitULuk9. Credentials stripped.",
+    "description": "Exact topic match, then keyword-scored fallback over the OnboardAI Policies Data Table. Returns policy + Google Drive source link."
+  },
+  "active": false,
+  "pinData": {}
+}

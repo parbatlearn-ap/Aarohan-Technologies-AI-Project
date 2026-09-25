@@ -1,0 +1,84 @@
+{
+  "name": "OnboardAI - Onboarding Progress MCP",
+  "nodes": [
+    {
+      "id": "mcp-trigger",
+      "name": "OnboardAI Onboarding Progress MCP",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        112
+      ],
+      "parameters": {
+        "path": "onboardai-onboarding-progress",
+        "authentication": "none",
+        "instructions": "This MCP server exposes one tool, get_onboarding_status, for the OnboardAI (Aarohan Technologies) project. Given an employee_id, it returns a structured JSON snapshot of that employee's onboarding progress: completion_percentage, status (On Track / Needs Attention / Blocked / Complete), completed/pending/overdue task counts, a blockers list, next_priorities, bgv_status and payroll_status. If status is \"Not Found\", the employee_id does not exist in the OnboardAI onboarding data — tell the user rather than inventing a status. If status is \"Blocked\" or \"Needs Attention\", surface the blockers list to the user rather than just the top-line status."
+      },
+      "webhookId": "2ddb6c12-6071-4031-b879-98d323e2693d"
+    },
+    {
+      "id": "tool",
+      "name": "get_onboarding_status",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        336
+      ],
+      "parameters": {
+        "description": "Given an employee_id (e.g. \"EMP-1001\"), computes that employee's current onboarding status from the OnboardAI onboarding Data Tables: completion percentage, an overall status (On Track / Needs Attention / Blocked / Complete), completed/pending/overdue task counts, a list of blockers (BGV/payroll holds, missing or under-review documents, overdue tasks), the top 3 next priorities, and current BGV/payroll status. Returns status \"Not Found\" if the employee_id does not exist.",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "Y0QrAkmB5sG9b0K6",
+          "__comment": "REMAP to the new id of the imported Engine (Logic) workflow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "employee_id": "={{ $fromAI('employee_id', \"Employee ID to look up (for example EMP-1001)\", 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "employee_id",
+              "displayName": "employee_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "get_onboarding_status": {
+      "ai_tool": [
+        [
+          {
+            "node": "OnboardAI Onboarding Progress MCP",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "backupNote": "Backed up 2026-09-25 from n8n cloud workflow id Ro337tsktn1htrRR. Credentials stripped.",
+    "description": "Custom MCP #2. MCP Server Trigger exposing get_onboarding_status -> Onboarding Progress Engine."
+  },
+  "active": false,
+  "pinData": {}
+}

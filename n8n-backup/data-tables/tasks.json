@@ -1,0 +1,181 @@
+{
+  "n8nDataTable": "OnboardAI Tasks",
+  "originalId": "UrT5HV43x3HX6ZvY",
+  "rows": [
+    {
+      "employeeId": "EMP-1001",
+      "taskName": "Accept offer letter",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-09-08"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "taskName": "Submit education certificates",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-09-12"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "taskName": "Submit bank details form for payroll",
+      "status": "pending",
+      "priority": "high",
+      "dueDate": "2026-09-19"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "taskName": "Upload updated address proof",
+      "status": "in_progress",
+      "priority": "high",
+      "dueDate": "2026-09-20"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "taskName": "Confirm remote equipment shipping address",
+      "status": "pending",
+      "priority": "medium",
+      "dueDate": "2026-09-23"
+    },
+    {
+      "employeeId": "EMP-1001",
+      "taskName": "Schedule manager intro call",
+      "status": "pending",
+      "priority": "medium",
+      "dueDate": "2026-09-22"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "taskName": "Accept offer letter",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-08-20"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "taskName": "Complete Day-1 orientation",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-09-01"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "taskName": "Complete timesheet training",
+      "status": "done",
+      "priority": "medium",
+      "dueDate": "2026-09-05"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "taskName": "Enroll in benefits",
+      "status": "done",
+      "priority": "medium",
+      "dueDate": "2026-09-10"
+    },
+    {
+      "employeeId": "EMP-1002",
+      "taskName": "Prepare for First 2 Weeks check-in",
+      "status": "pending",
+      "priority": "low",
+      "dueDate": "2026-09-25"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "taskName": "Accept offer letter",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-08-25"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "taskName": "Submit education certificates",
+      "status": "done",
+      "priority": "medium",
+      "dueDate": "2026-09-01"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "taskName": "Resolve BGV discrepancy with TrustVerify",
+      "status": "pending",
+      "priority": "high",
+      "dueDate": "2026-09-16"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "taskName": "Submit bank details form for payroll",
+      "status": "pending",
+      "priority": "high",
+      "dueDate": "2026-09-18"
+    },
+    {
+      "employeeId": "EMP-1003",
+      "taskName": "Confirm remote equipment shipping address",
+      "status": "pending",
+      "priority": "low",
+      "dueDate": "2026-09-25"
+    },
+    {
+      "employeeId": "EMP-2001",
+      "taskName": "Accept offer letter",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-09-20"
+    },
+    {
+      "employeeId": "EMP-2001",
+      "taskName": "Submit identity documents",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "employeeId": "EMP-2001",
+      "taskName": "Submit bank details form for payroll",
+      "status": "pending",
+      "priority": "high",
+      "dueDate": "2026-09-27"
+    },
+    {
+      "employeeId": "EMP-2001",
+      "taskName": "Complete VPN / remote access setup",
+      "status": "pending",
+      "priority": "medium",
+      "dueDate": "2026-09-28"
+    },
+    {
+      "employeeId": "EMP-2001",
+      "taskName": "Attend virtual orientation",
+      "status": "pending",
+      "priority": "medium",
+      "dueDate": "2026-09-29"
+    },
+    {
+      "employeeId": "EMP-2002",
+      "taskName": "Accept offer letter",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "2026-09-20"
+    },
+    {
+      "employeeId": "EMP-2002",
+      "taskName": "Submit identity documents",
+      "status": "pending",
+      "priority": "high",
+      "dueDate": "2026-09-26"
+    },
+    {
+      "employeeId": "EMP-2002",
+      "taskName": "Submit bank details form for payroll",
+      "status": "pending",
+      "priority": "high",
+      "dueDate": "2026-09-27"
+    },
+    {
+      "employeeId": "EMP-2002",
+      "taskName": "Collect ID badge on Day 1",
+      "status": "pending",
+      "priority": "medium",
+      "dueDate": "2026-09-29"
+    }
+  ]
+}

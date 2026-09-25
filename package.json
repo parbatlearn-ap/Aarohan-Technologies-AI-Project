@@ -1,0 +1,13 @@
+{
+  "name": "onboardai-command-center",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OnboardAI - AI Employee Pre-boarding & Onboarding Command Center for Aarohan Technologies",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node tests/run-tests.mjs",
+    "dev": "netlify dev",
+    "check-secrets": "node tests/check-secrets.mjs"
+  }
+}
