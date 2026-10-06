@@ -54,7 +54,17 @@ const routes = {
   'POST /employees': async (req) => {
     const b = await readBody(req);
     if (!b.employee_name || !b.email) return json({ error: 'Name and email are required.' }, 400);
-    const id = b.employee_id && EMP_ID.test(b.employee_id) ? b.employee_id : `EMP-${Math.floor(3000 + Math.random() * 6000)}`;
+    // Block duplicates: same person (name) with the same email already exists.
+    const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const dup = (await db.findByEmail(b.email.trim())).find(e => norm(e.employee_name) === norm(b.employee_name) && norm(e.email) === norm(b.email));
+    if (dup) return json({ error: `${dup.employee_name} is already in the list as ${dup.employee_id}. Select them from the Employee list instead of adding again.` }, 409);
+    // Pick an ID that is not already taken.
+    let id = b.employee_id && EMP_ID.test(b.employee_id) ? b.employee_id : null;
+    for (let i = 0; !id && i < 10; i++) {
+      const candidate = `EMP-${Math.floor(3000 + Math.random() * 6000)}`;
+      if (!(await db.getEmployee(candidate))) id = candidate;
+    }
+    if (!id) return json({ error: 'Could not create a unique employee ID. Please try again.' }, 500);
     const joining = b.joining_date || new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
     const [emp] = await db.createEmployee({
       employee_id: id, employee_name: b.employee_name, email: b.email, department: b.department || 'General',
@@ -72,6 +82,17 @@ const routes = {
     return json({ employee: emp });
   },
 
+  // Add or correct the email of an existing hire (e.g. demo hires created without one).
+  'POST /employees/email': async (req) => {
+    const { employee_id, email } = await readBody(req);
+    if (!EMP_ID.test(employee_id || '')) return json({ error: 'Valid employee id required.' }, 400);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '') || email.length > 120) return json({ error: 'Please enter a valid email address.' }, 400);
+    if (!(await db.getEmployee(employee_id))) return json({ error: 'Employee not found.' }, 404);
+    await db.updateEmail(employee_id, email.trim());
+    await db.logActivity(employee_id, 'email_updated', {});
+    return json({ ok: true });
+  },
+
   'GET /progress': async (req, url) => {
     const id = url.searchParams.get('id') || '';
     if (!EMP_ID.test(id)) return json({ error: 'Valid employee id required (e.g. EMP-1001).' }, 400);
@@ -79,12 +100,12 @@ const routes = {
     let progress, source = 'Calculated by the Onboarding Progress tool (n8n MCP)', mcpError = null;
     try {
       progress = (await mcpTools.onboardingProgress(id)).data;
-      if (!progress || progress.status === 'Not Found') throw new Error('Employee not in n8n Data Tables');
+      if (!progress || progress.status === 'Not Found') throw new Error('Employee not found by the n8n tool');
     } catch (e) {
       mcpError = e.message;
       if (!emp) return json({ error: 'Employee not found.' }, 404);
       progress = computeProgress(emp, tasks);
-      source = 'Calculated from Supabase data (this hire is not in n8n yet)';
+      source = 'Calculated directly from the onboarding database (the n8n Progress tool did not answer in time)';
     }
     return json({ employee: emp, tasks, progress, source, mcp_note: mcpError });
   },
@@ -93,11 +114,19 @@ const routes = {
     const { employee_id } = await readBody(req);
     const emp = await db.getEmployee(employee_id);
     if (!emp) return json({ error: 'Employee not found.' }, 404);
-    const msg = await groqChat([
+    const prompt = [
       { role: 'system', content: 'You write warm, human onboarding messages for Aarohan Technologies People Ops. No corporate jargon, no emojis, under 120 words. Write ONLY 2 short body paragraphs separated by a blank line: no greeting line, no sign-off, no subject (the email template adds those).' },
       { role: 'user', content: `Write the body of a personalised welcome note for ${emp.employee_name}, joining as ${emp.role_title || 'a new team member'} in ${emp.department} on ${emp.joining_date}. Work mode: ${emp.is_virtual ? 'remote/virtual — mention a virtual orientation invite will arrive on their calendar and IT will courier the laptop' : 'office-based at Pune HQ — mention Day-1 check-in with People Ops and ID badge'}.` },
-    ], { temperature: 0.6, max_tokens: 300 });
-    return json({ employee: emp, message: msg.content, source: 'Written by Groq AI' });
+    ];
+    // Try twice; if the AI still returns nothing, use a safe template so the user is never stuck.
+    let text = '';
+    for (let i = 0; i < 2 && !text; i++) text = ((await groqChat(prompt, { temperature: 0.6, max_tokens: 300 })).content || '').trim();
+    if (!text) {
+      text = `We're delighted that you're joining the ${emp.department} team as ${emp.role_title || 'a new team member'} on ${emp.joining_date}. Your onboarding coordinator will guide you through everything you need before your first day.\n\n` +
+        (emp.is_virtual ? 'A virtual orientation invite will arrive on your calendar, and IT will courier your laptop ahead of time.' : 'On Day 1, please check in with People Ops at our Pune office to collect your ID badge.');
+      return json({ employee: emp, message: text, source: 'Standard template (AI draft was unavailable — please review)' });
+    }
+    return json({ employee: emp, message: text, source: 'Written by Groq AI' });
   },
 
   'POST /welcome/send': async (req) => {
