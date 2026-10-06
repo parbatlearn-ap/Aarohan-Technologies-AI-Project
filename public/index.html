@@ -27,6 +27,7 @@
     <button class="tab" data-tab="welcome">New Hire Welcome</button>
     <button class="tab" data-tab="policy">Policy Assistant</button>
     <button class="tab" data-tab="progress">Onboarding Progress</button>
+    <button class="tab" data-tab="guide">How to use</button>
   </nav>
 
   <main>
@@ -54,10 +55,20 @@
 
     <!-- WELCOME -->
     <section id="tab-welcome" class="panel">
+      <div class="card steps-card">
+        <h2>How to welcome a new hire</h2>
+        <ol class="steps">
+          <li><b>Select the new hire</b> from the list (or add a new one with <i>+ Add a new hire</i>). You'll see straight away whether their welcome email has already been sent.</li>
+          <li><b>Generate the welcome message.</b> AI writes a personal note based on their role, department, joining date and work mode.</li>
+          <li><b>Review and edit</b> the message in the box. You can change any wording before sending.</li>
+          <li><b>Send.</b> The hire gets a branded welcome email. For virtual roles, an orientation meeting is also added to Google Calendar.</li>
+        </ol>
+      </div>
       <div class="grid2">
         <div class="card">
           <h2>1. Select a new hire</h2>
           <label>Employee<select id="welcome-emp"></select></label>
+          <div id="welcome-status" class="welcome-status"></div>
           <div class="row">
             <button class="btn" id="btn-preview">Generate welcome message</button>
           </div>
@@ -76,8 +87,10 @@
         </div>
         <div class="card">
           <h2>2. Review &amp; send</h2>
-          <div id="welcome-out" class="output muted">Pick a new hire and generate a message. Groq drafts a personalised note; sending runs the <b>New Hire Welcome MCP</b>, which emails the hire via Gmail and — for virtual roles — creates a Google Calendar orientation invite.</div>
+          <div id="welcome-out" class="hint">Pick a new hire and click <b>Generate welcome message</b>. The draft appears below, and you can edit it before sending.</div>
+          <textarea id="welcome-draft" class="draft" rows="8" maxlength="2000" placeholder="The welcome message will appear here…"></textarea>
           <div class="row"><button class="btn accent" id="btn-send" disabled>Send welcome email (+ calendar if virtual)</button></div>
+          <p id="send-why" class="hint">Generate a message first. The Send button turns on once there is a draft.</p>
           <div id="send-out"></div>
         </div>
       </div>
@@ -124,6 +137,62 @@
         </div>
       </div>
       <div id="progress-out"></div>
+    </section>
+
+    <!-- GUIDE -->
+    <section id="tab-guide" class="panel">
+      <div class="card">
+        <h2>What OnboardAI does</h2>
+        <p>The time between a candidate accepting an offer and their first day is where most onboarding problems happen: missing documents, delayed background checks, unanswered policy questions and new hires who feel ignored. OnboardAI gives People Ops one place to <b>welcome new hires, answer their policy questions and track their onboarding</b>, with AI doing the repetitive work.</p>
+      </div>
+
+      <div class="card">
+        <h2>The onboarding journey in the app</h2>
+        <ol class="steps">
+          <li><b>Offer accepted → add the new hire.</b> <i>New Hire Welcome</i> tab → <i>+ Add a new hire</i>. A standard checklist of onboarding tasks is created automatically.</li>
+          <li><b>Welcome them.</b> Select the hire → <i>Generate welcome message</i> → review and edit → <i>Send</i>. They get a branded email, and virtual hires also get a calendar invite for orientation.</li>
+          <li><b>Answer their questions.</b> <i>Policy Assistant</i> tab: look up an official policy, ask a question in plain English, or chat with the AI assistant.</li>
+          <li><b>Track progress.</b> <i>Onboarding Progress</i> tab: completion %, overdue tasks, blockers (for example a background-check problem) and what to do next.</li>
+          <li><b>See everyone at a glance.</b> <i>Dashboard</i>: all new hires, their progress and whether they've been welcomed.</li>
+        </ol>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h2>Each tab in one line</h2>
+          <ul class="clean">
+            <li><b>Dashboard:</b> summary numbers and the list of new hires.</li>
+            <li><b>New Hire Welcome:</b> add hires, draft and send welcome emails.</li>
+            <li><b>Policy Assistant:</b> <i>Quick Lookup</i> shows the exact policy text and source document. <i>Policy Intelligence</i> searches all policies and says how confident it is. The chat answers questions and shows which tool it used.</li>
+            <li><b>Onboarding Progress:</b> one hire's full status, blockers and next steps.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>Built-in safety rules</h2>
+          <ul class="clean">
+            <li>Questions about <b>pay, legal matters, grievances or termination</b> are never answered by AI. They are passed to People Ops.</li>
+            <li>Policy answers come <b>only from Aarohan's policy documents</b>, and the source is shown. If confidence is low, the app says so and suggests human review.</li>
+            <li>Every result shows <b>which tool produced it</b>, so nothing is a hidden guess.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>What runs behind the scenes</h2>
+        <p class="muted">Browser → secure server function (Netlify) → AI model (Groq) for writing and chat · onboarding database (Supabase) for hires and tasks · four automation tools on n8n (MCP servers): Policy Lookup, Policy Intelligence, Onboarding Progress and New Hire Welcome (Gmail + Google Calendar).</p>
+      </div>
+
+      <div class="card">
+        <h2>Try it in 3 minutes</h2>
+        <ol class="steps">
+          <li><i>Dashboard</i>: see the new hires and their progress.</li>
+          <li><i>New Hire Welcome</i>: pick <b>EMP-2001 Devika Rao</b> → Generate → Send (it will say she was already welcomed).</li>
+          <li><i>Policy Assistant</i>: click the <b>Leave policy</b> chip, then the <b>Onboarding Day-1</b> chip.</li>
+          <li><i>Onboarding Progress</i>: pick <b>EMP-1003 Arjun Verma</b>, a blocked hire with a background-check issue.</li>
+          <li>Chat: ask <b>“How is EMP-1003 doing?”</b>, then <b>“Can I get a salary hike?”</b> to see the escalation rule.</li>
+        </ol>
+        <p class="hint">Note: this demo runs on free servers. The first action after a quiet period can take up to a minute while the server wakes up. All people and data are fictional.</p>
+      </div>
     </section>
   </main>
 

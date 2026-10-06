@@ -49,7 +49,7 @@ main { max-width: 1480px; margin: 0 auto; padding: 20px 16px; }
 .stat .sub { color: var(--muted); font-size: .8rem; }
 .clickable { cursor: pointer; }
 .clickable:hover { box-shadow: 0 2px 10px rgba(13, 37, 82, .12); }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .grid2 > .card { margin-bottom: 0; }
 @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } .topbar, .tabs { padding-left: 16px; padding-right: 16px; } }
 
@@ -83,6 +83,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--sky); borde
 .pill.bad { background: #fde8e8; color: var(--danger); }
 .pill.muted { color: var(--muted); }
 
+.draft { width: 100%; box-sizing: border-box; min-height: 180px; margin-top: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #f7f9fc; font: inherit; line-height: 1.6; resize: vertical; overflow: hidden; }
+.steps { margin: 6px 0 0; padding-left: 20px; line-height: 1.6; }
+.steps li { margin-bottom: 4px; }
+.welcome-status { margin-top: 10px; }
+.welcome-status .result { margin-top: 0; }
 .output { background: #f7f9fc; border: 1px solid var(--line); border-radius: 8px; padding: 14px; white-space: pre-wrap; min-height: 80px; }
 .result { margin-top: 14px; border-left: 4px solid var(--teal); background: #f7fbfb; padding: 12px 14px; border-radius: 6px; }
 .result.error { border-left-color: var(--danger); background: #fff6f6; }

@@ -60,6 +60,7 @@ async function loadEmployees() {
     const opts = employees.map((e) => `<option value="${esc(e.employee_id)}">${esc(e.employee_id)} — ${esc(e.employee_name)}</option>`).join('');
     const keep = (sel) => { const v = sel.value; sel.innerHTML = opts; if (v) sel.value = v; };
     keep($('#welcome-emp')); keep($('#progress-emp'));
+    showWelcomeStatus(); updateSendState();
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="7">${errorBox(e.message)}</td></tr>`;
   }
@@ -77,37 +78,100 @@ async function loadHealth() {
 }
 
 // ---------- New Hire Welcome ----------
+const fmtDate = (iso) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+const selectedEmp = () => employees.find((e) => e.employee_id === $('#welcome-emp').value);
+
+// Grow the draft box to fit the whole message, so nothing is hidden.
+function fitDraft() { const t = $('#welcome-draft'); t.style.height = 'auto'; t.style.height = t.scrollHeight + 4 + 'px'; }
+
+// Turn the Send button on/off and always say why.
+function updateSendState() {
+  const emp = selectedEmp(), btn = $('#btn-send'), why = $('#send-why');
+  const hasDraft = $('#welcome-draft').value.trim().length > 0;
+  let reason = '';
+  if (!emp) reason = 'Select a new hire first.';
+  else if (!emp.email) reason = 'This hire has no email address on file, so no email can be sent.';
+  else if (!hasDraft) reason = 'Generate a message first. The Send button turns on once there is a draft.';
+  btn.disabled = !!reason;
+  btn.textContent = emp?.welcome_sent_at ? 'Resend welcome email (+ calendar if virtual)' : 'Send welcome email (+ calendar if virtual)';
+  why.textContent = reason || `Will email ${emp.email}${emp.is_virtual ? ' and add an orientation meeting to Google Calendar (virtual role).' : ' (office role, no calendar invite).'}`;
+}
+
+// Show straight away whether this hire was already welcomed.
+function showWelcomeStatus() {
+  const emp = selectedEmp(), box = $('#welcome-status');
+  if (!emp) { box.innerHTML = ''; return; }
+  box.innerHTML = emp.welcome_sent_at
+    ? `<div class="result"><span class="pill ok">Welcome email sent</span> on ${esc(fmtDate(emp.welcome_sent_at))}. Sending again will email them a second time.</div>`
+    : emp.email
+      ? `<div class="result"><span class="pill muted">Not sent yet</span> ${esc(emp.email)} · ${emp.is_virtual ? 'Virtual role' : 'Office role'}</div>`
+      : `<div class="result error"><span class="pill warn">No email on file</span> Add one to send the welcome email.
+          <div class="row"><input id="fix-email" type="email" maxlength="120" placeholder="name@example.com" class="grow" />
+          <button class="btn ghost" id="btn-save-email" type="button">Save email</button></div></div>`;
+  $('#btn-save-email')?.addEventListener('click', saveEmail);
+}
+
+async function saveEmail(ev) {
+  const emp = selectedEmp(), email = $('#fix-email').value.trim();
+  if (!emp || !email) return;
+  busy(ev.target, true, 'Saving…');
+  try {
+    await api('/employees/email', { employee_id: emp.employee_id, email });
+    await loadEmployees();
+    $('#welcome-out').textContent = `Email saved for ${emp.employee_name}. Now click “Generate welcome message”.`;
+  } catch (e) { $('#welcome-out').innerHTML = errorBox(e.message); busy(ev.target, false); }
+}
+
+function resetDraft() {
+  draftMessage = '';
+  $('#welcome-draft').value = ''; fitDraft();
+  $('#send-out').innerHTML = '';
+  $('#welcome-out').innerHTML = 'Click <b>Generate welcome message</b>. The draft appears below, and you can edit it before sending.';
+  showWelcomeStatus(); updateSendState();
+}
+
 $('#btn-preview').addEventListener('click', async (ev) => {
   const id = $('#welcome-emp').value; if (!id) return;
   busy(ev.target, true, 'Writing with Groq…');
   $('#send-out').innerHTML = '';
   try {
     const r = await api('/welcome/preview', { employee_id: id });
-    $('#welcome-out').classList.remove('muted');
-    draftMessage = r.message;
-    $('#welcome-out').textContent = r.message;
-    const emp = r.employee;
-    $('#btn-send').disabled = !emp.email;
-    $('#send-out').innerHTML = `<span class="mcp-badge">${esc(r.source)}</span><p class="hint">Will email <b>${esc(emp.email || 'no email on file')}</b>${emp.is_virtual ? ' and create a Google Calendar orientation invite (virtual role)' : ' (office role — no calendar invite)'}.</p>`;
+    if (!r.message || !r.message.trim()) throw new Error('The AI returned an empty message. Please click Generate again.');
+    $('#welcome-draft').value = r.message; fitDraft();
+    $('#welcome-out').innerHTML = `<span class="mcp-badge">${esc(r.source)}</span> Review the message below and edit anything before sending.`;
   } catch (e) { $('#welcome-out').innerHTML = errorBox(e.message); }
+  updateSendState();
   busy(ev.target, false);
 });
 
-$('#welcome-emp').addEventListener('change', () => { draftMessage = ''; $('#btn-send').disabled = true; });
+$('#welcome-emp').addEventListener('change', resetDraft);
+$('#welcome-draft').addEventListener('input', () => { fitDraft(); updateSendState(); });
 
 $('#btn-send').addEventListener('click', async (ev) => {
   const id = $('#welcome-emp').value; if (!id) return;
+  const emp = selectedEmp();
+  if (emp?.welcome_sent_at && !confirmResend(ev.target)) return;
   busy(ev.target, true, 'Calling New Hire Welcome MCP…');
   try {
-    const r = await api('/welcome/send', { employee_id: id, message: draftMessage });
+    const r = await api('/welcome/send', { employee_id: id, message: $('#welcome-draft').value.trim() });
     const d = r.result || {};
     $('#send-out').innerHTML = `<div class="result"><h3>${statusPill(d.overall_status === 'Success' ? 'Complete' : d.overall_status)} ${esc(d.employee_name || id)}</h3>
       Email: <b>${esc(d.email_status)}</b><br>Calendar: <b>${esc(d.calendar_status)}</b>
       <span class="mcp-badge">${esc(r.source)}${secs(r.ms)}</span></div>`;
-    loadEmployees();
+    await loadEmployees();
   } catch (e) { $('#send-out').innerHTML = errorBox(e.message); }
   busy(ev.target, false);
+  showWelcomeStatus(); updateSendState();
 });
+
+// Resend needs a second click (no pop-up dialogs): first click arms it, second click sends.
+function confirmResend(btn) {
+  if (btn.dataset.armed === '1') { btn.dataset.armed = ''; return true; }
+  btn.dataset.armed = '1';
+  $('#send-why').innerHTML = '<b>Already sent before.</b> Click the button again within 5 seconds to send a second email.';
+  setTimeout(() => { btn.dataset.armed = ''; updateSendState(); }, 5000);
+  return false;
+}
 
 $('#add-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -121,6 +185,7 @@ $('#add-form').addEventListener('submit', async (ev) => {
     ev.target.reset();
     await loadEmployees();
     $('#welcome-emp').value = r.employee.employee_id;
+    resetDraft();
     $('#welcome-out').textContent = `Saved ${r.employee.employee_name} as ${r.employee.employee_id}. Click “Generate welcome message”.`;
   } catch (e) { $('#welcome-out').innerHTML = errorBox(e.message); }
   busy(btn, false);
@@ -198,6 +263,7 @@ $('#btn-progress').addEventListener('click', async (ev) => {
   const id = $('#progress-emp').value; if (!id) return;
   const out = $('#progress-out');
   busy(ev.target, true, 'Calling Onboarding Progress MCP…');
+  out.innerHTML = '<div class="result">Asking the <b>Onboarding Progress</b> tool on n8n… this usually takes 5–15 seconds (longer if the free server was asleep).</div>';
   try {
     const r = await api('/progress?id=' + encodeURIComponent(id));
     const p = r.progress, e = r.employee || {};
