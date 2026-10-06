@@ -6,7 +6,14 @@ import { db } from './supabase.mjs';
 export async function groqChat(messages, { tools, temperature = 0.3, max_tokens = 700 } = {}) {
   const key = config.groqKey();
   if (!key) throw new Error('GROQ_API_KEY is not configured on the server.');
-  const body = { model: config.groqModel(), messages, temperature, max_tokens };
+  const model = config.groqModel();
+  const body = { model, messages, temperature, max_tokens };
+  // gpt-oss models "think" before answering, and that thinking uses up the token
+  // budget. Keep thinking short and give enough room, or the reply comes back empty.
+  if (/gpt-oss/i.test(model)) {
+    body.reasoning_effort = 'low';
+    body.max_tokens = Math.max(max_tokens, 1200);
+  }
   if (tools) { body.tools = tools; body.tool_choice = 'auto'; }
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',

@@ -17,10 +17,14 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
 
 export const db = {
   listEmployees: () => sb('onboarding_employees?select=*&order=joining_date.desc'),
+  findByEmail: (email) => sb(`onboarding_employees?select=employee_id,employee_name,email&email=ilike.${encodeURIComponent(email)}`),
   getEmployee: async (id) => (await sb(`onboarding_employees?select=*&employee_id=eq.${encodeURIComponent(id)}`))[0] || null,
   listTasks: (id) => sb(`onboarding_tasks?select=*&order=due_date.asc${id ? `&employee_id=eq.${encodeURIComponent(id)}` : ''}`),
   createEmployee: (row) => sb('onboarding_employees', { method: 'POST', body: row, prefer: 'return=representation' }),
   createTasks: (rows) => sb('onboarding_tasks', { method: 'POST', body: rows, prefer: 'return=minimal' }),
+  updateEmail: (id, email) => sb(`onboarding_employees?employee_id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH', body: { email }, prefer: 'return=minimal',
+  }),
   markWelcomed: (id) => sb(`onboarding_employees?employee_id=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH', body: { welcome_sent_at: new Date().toISOString() }, prefer: 'return=minimal',
   }),
