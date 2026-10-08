@@ -19,7 +19,11 @@ export const db = {
   listEmployees: () => sb('onboarding_employees?select=*&order=joining_date.desc'),
   findByEmail: (email) => sb(`onboarding_employees?select=employee_id,employee_name,email&email=ilike.${encodeURIComponent(email)}`),
   getEmployee: async (id) => (await sb(`onboarding_employees?select=*&employee_id=eq.${encodeURIComponent(id)}`))[0] || null,
-  listTasks: (id) => sb(`onboarding_tasks?select=*&order=due_date.asc${id ? `&employee_id=eq.${encodeURIComponent(id)}` : ''}`),
+  listTasks: (id) => sb(`onboarding_tasks?select=*&archived=eq.false&order=sort_order.asc,due_date.asc${id ? `&employee_id=eq.${encodeURIComponent(id)}` : ''}`),
+  getTask: async (taskId) => (await sb(`onboarding_tasks?select=*&id=eq.${encodeURIComponent(taskId)}&archived=eq.false`))[0] || null,
+  setTaskStatus: (taskId, done) => sb(`onboarding_tasks?id=eq.${encodeURIComponent(taskId)}`, {
+    method: 'PATCH', body: { status: done ? 'done' : 'pending', completed_at: done ? new Date().toISOString() : null }, prefer: 'return=minimal',
+  }),
   createEmployee: (row) => sb('onboarding_employees', { method: 'POST', body: row, prefer: 'return=representation' }),
   createTasks: (rows) => sb('onboarding_tasks', { method: 'POST', body: rows, prefer: 'return=minimal' }),
   updateEmail: (id, email) => sb(`onboarding_employees?employee_id=eq.${encodeURIComponent(id)}`, {
@@ -41,15 +45,19 @@ export function computeProgress(emp, tasks, today = new Date().toISOString().sli
   const overdue = tasks.filter(t => t.status !== 'done' && t.due_date && t.due_date < today);
   const pending = tasks.filter(t => t.status !== 'done' && !overdue.includes(t));
   const pct = tasks.length ? Math.round((done.length / tasks.length) * 100) : 0;
-  const blockers = overdue.map(t => `Overdue task (${t.priority} priority, due ${t.due_date}): ${t.task_name}`);
+  const blockers = [];
+  if (['Discrepancy', 'Blocked'].includes(emp.bgv_status)) blockers.push(`Background verification ${emp.bgv_status.toLowerCase()}: needs HR follow-up before joining.`);
+  for (const t of overdue) blockers.push(`Overdue (${t.owner || 'Unassigned'}${t.critical ? ', critical' : ''}, due ${t.due_date}): ${t.task_name}`);
   let status = 'On Track';
   if (pct === 100) status = 'Complete';
   else if (['Discrepancy', 'Blocked'].includes(emp.bgv_status)) status = 'Blocked';
   else if (overdue.length) status = 'Needs Attention';
+  const rank = (t) => (overdue.includes(t) ? 0 : 1) * 10 + (t.critical ? 0 : 1);
   return {
     employee_id: emp.employee_id, employee_name: emp.employee_name, completion_percentage: pct, status,
     completed: done.length, pending: pending.length, overdue: overdue.length, blockers,
-    next_priorities: [...overdue, ...pending].slice(0, 3).map(t => `${t.task_name} (due ${t.due_date})`),
+    next_priorities: [...overdue, ...pending].sort((a, b) => rank(a) - rank(b) || (a.due_date < b.due_date ? -1 : 1)).slice(0, 3)
+      .map(t => `${t.task_name} (${t.owner || 'Unassigned'}, due ${t.due_date}${overdue.includes(t) ? ', overdue' : ''})`),
     bgv_status: emp.bgv_status, payroll_status: emp.payroll_status,
   };
 }
