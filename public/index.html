@@ -19,7 +19,10 @@
         <p>AI Employee Pre-boarding &amp; Onboarding Command Center</p>
       </div>
     </div>
-    <span id="health" class="pill muted">Checking services…</span>
+    <div class="top-right">
+      <label class="tech-toggle"><input type="checkbox" id="tech-toggle" /> Show tech details</label>
+      <span id="health" class="pill muted">Checking services…</span>
+    </div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -37,7 +40,25 @@
         <div class="card stat"><span class="label">New Hires</span><span id="stat-hires" class="value">–</span><span class="sub">in pre-boarding / onboarding</span></div>
         <div class="card stat"><span class="label">Avg. Onboarding Progress</span><span id="stat-progress" class="value">–</span><span class="sub">tasks completed</span></div>
         <div class="card stat"><span class="label">Pending Tasks</span><span id="stat-pending" class="value">–</span><span class="sub">across all new hires</span></div>
-        <div class="card stat clickable" data-goto="policy"><span class="label">Policy Assistant</span><span class="value small">Ask →</span><span class="sub">grounded in Aarohan policies</span></div>
+        <div class="card stat"><span class="label">Need Attention</span><span id="stat-attention" class="value">–</span><span class="sub">hires at risk or blocked</span></div>
+      </div>
+      <div class="card">
+        <h2>Onboarding journey</h2>
+        <div class="flow">
+          <div class="stage"><span class="num">1</span><b>Offer accepted</b><span class="who">Recruiter · HR</span><span class="where">Add hire → checklist created</span></div>
+          <div class="arrow">→</div>
+          <div class="stage"><span class="num">2</span><b>Pre-joining</b><span class="who">New hire · HR · IT · Facilities · Manager</span><span class="where">Welcome email · documents · laptop · buddy</span></div>
+          <div class="arrow">→</div>
+          <div class="stage"><span class="num">3</span><b>Day 1</b><span class="who">HR · IT · Manager · Buddy</span><span class="where">Joining forms · inductions · team intro</span></div>
+          <div class="arrow">→</div>
+          <div class="stage"><span class="num">4</span><b>First 30 days</b><span class="who">Manager · HR</span><span class="where">Training · department heads · 30-day check-in</span></div>
+          <div class="arrow">→</div>
+          <div class="stage end"><span class="num">✓</span><b>Settled in</b><span class="who">Employee</span><span class="where">Onboarding complete</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Needs attention</h2><span class="muted small">Exceptions only: what HR should act on today</span></div>
+        <div id="attention" class="attention"><p class="muted">Loading…</p></div>
       </div>
       <div class="card">
         <div class="card-head"><h2>New hires</h2><button class="btn ghost" id="refresh">Refresh</button></div>
@@ -46,7 +67,7 @@
           <tbody><tr><td colspan="7" class="muted">Loading…</td></tr></tbody>
         </table></div>
       </div>
-      <div class="card">
+      <div class="card tech-only">
         <h2>How this works</h2>
         <p class="muted">Every AI answer is produced through tools, not guessed: the browser calls a secure Netlify Function, which calls
           <b>Groq</b> (LLM), <b>Supabase</b> (new-hire data) and four custom <b>n8n MCP servers</b> (Policy Lookup, Policy Intelligence, Onboarding Progress, New Hire Welcome → Gmail + Google Calendar). Results show which MCP tool answered.</p>
@@ -142,6 +163,26 @@
     <!-- GUIDE -->
     <section id="tab-guide" class="panel">
       <div class="card">
+        <h2>The onboarding process and where the app helps</h2>
+        <div class="flow">
+          <div class="stage"><span class="num">1</span><b>Offer accepted</b><span class="who">Recruiter · HR</span><span class="where">Add hire → checklist created</span></div>
+          <div class="arrow">→</div>
+          <div class="stage"><span class="num">2</span><b>Pre-joining</b><span class="who">New hire · HR · IT · Facilities · Manager</span><span class="where">Welcome email · documents · laptop · buddy</span></div>
+          <div class="arrow">→</div>
+          <div class="stage"><span class="num">3</span><b>Day 1</b><span class="who">HR · IT · Manager · Buddy</span><span class="where">Joining forms · inductions · team intro</span></div>
+          <div class="arrow">→</div>
+          <div class="stage"><span class="num">4</span><b>First 30 days</b><span class="who">Manager · HR</span><span class="where">Training · department heads · 30-day check-in</span></div>
+          <div class="arrow">→</div>
+          <div class="stage end"><span class="num">✓</span><b>Settled in</b><span class="who">Employee</span><span class="where">Onboarding complete</span></div>
+        </div>
+        <div class="legend"><span class="solid">In the app today</span><span class="dashed">Planned next</span></div>
+        <div class="roadmap">
+          <div class="rm solid"><b>Today</b><ul class="clean"><li>Add new hire + standard checklist with owners</li><li>AI-written welcome email + calendar invite</li><li>Policy answers with sources &amp; escalation</li><li>Live progress, blockers &amp; "needs attention" view</li></ul></div>
+          <div class="rm dashed"><b>Planned next</b><ul class="clean"><li>New-hire self-service page (upload sample documents)</li><li>Automatic reminders to task owners</li><li>Manager &amp; buddy notifications</li><li>30/60/90-day pulse feedback</li></ul></div>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>What OnboardAI does</h2>
         <p>The time between a candidate accepting an offer and their first day is where most onboarding problems happen: missing documents, delayed background checks, unanswered policy questions and new hires who feel ignored. OnboardAI gives People Ops one place to <b>welcome new hires, answer their policy questions and track their onboarding</b>, with AI doing the repetitive work.</p>
       </div>
@@ -161,10 +202,10 @@
         <div class="card">
           <h2>Each tab in one line</h2>
           <ul class="clean">
-            <li><b>Dashboard:</b> summary numbers and the list of new hires.</li>
+            <li><b>Dashboard:</b> the onboarding journey, a <i>Needs attention</i> panel and the list of new hires.</li>
             <li><b>New Hire Welcome:</b> add hires, draft and send welcome emails.</li>
             <li><b>Policy Assistant:</b> <i>Quick Lookup</i> shows the exact policy text and source document. <i>Policy Intelligence</i> searches all policies and says how confident it is. The chat answers questions and shows which tool it used.</li>
-            <li><b>Onboarding Progress:</b> one hire's full status, blockers and next steps.</li>
+            <li><b>Onboarding Progress:</b> one hire's checklist (grouped by phase, with owners), status, blockers and next steps. Tick tasks as they are done.</li>
           </ul>
         </div>
         <div class="card">
@@ -185,10 +226,10 @@
       <div class="card">
         <h2>Try it in 3 minutes</h2>
         <ol class="steps">
-          <li><i>Dashboard</i>: see the new hires and their progress.</li>
-          <li><i>New Hire Welcome</i>: pick <b>EMP-2001 Devika Rao</b> → Generate → Send (it will say she was already welcomed).</li>
-          <li><i>Policy Assistant</i>: click the <b>Leave policy</b> chip, then the <b>Onboarding Day-1</b> chip.</li>
-          <li><i>Onboarding Progress</i>: pick <b>EMP-1003 Arjun Verma</b>, a blocked hire with a background-check issue.</li>
+          <li><i>Dashboard</i>: read the <b>Needs attention</b> panel: who joins soon with critical tasks open, overdue tasks by team, blocked hires.</li>
+          <li><i>Onboarding Progress</i>: pick <b>EMP-1003 Arjun Verma</b> (blocked, background-check issue). Tick an open task and watch progress and blockers update.</li>
+          <li><i>New Hire Welcome</i>: pick <b>EMP-6558 Neha Joshi</b> → Generate → review → Send.</li>
+          <li><i>Policy Assistant</i>: click the <b>Leave policy</b> chip, then <b>Onboarding Day-1</b>.</li>
           <li>Chat: ask <b>“How is EMP-1003 doing?”</b>, then <b>“Can I get a salary hike?”</b> to see the escalation rule.</li>
         </ol>
         <p class="hint">Note: this demo runs on free servers. The first action after a quiet period can take up to a minute while the server wakes up. All people and data are fictional.</p>

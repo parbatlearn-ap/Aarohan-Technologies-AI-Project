@@ -53,10 +53,11 @@ async function loadEmployees() {
     $('#stat-pending').textContent = pending;
     tbody.innerHTML = employees.map((e) => `<tr>
       <td>${esc(e.employee_id)}</td><td>${esc(e.employee_name)}</td><td>${esc(e.department)}</td>
-      <td>${e.is_virtual ? 'Virtual' : 'Office'}</td><td>${esc(e.joining_date)}</td>
+      <td>${e.is_virtual ? 'Virtual' : 'Office'}</td><td>${esc(e.joining_date)}<br><span class="muted small">${joinsIn(e.days_to_join)}</span></td>
       <td><div class="progress-cell"><div class="bar"><span style="width:${e.progress}%"></span></div>${e.progress}%</div></td>
       <td>${e.welcome_sent_at ? '<span class="pill ok">Sent</span>' : '<span class="pill muted">Not yet</span>'}</td></tr>`).join('')
       || '<tr><td colspan="7" class="muted">No new hires yet.</td></tr>';
+    renderAttention();
     const opts = employees.map((e) => `<option value="${esc(e.employee_id)}">${esc(e.employee_id)} — ${esc(e.employee_name)}</option>`).join('');
     const keep = (sel) => { const v = sel.value; sel.innerHTML = opts; if (v) sel.value = v; };
     keep($('#welcome-emp')); keep($('#progress-emp'));
@@ -66,6 +67,29 @@ async function loadEmployees() {
   }
 }
 $('#refresh').addEventListener('click', loadEmployees);
+
+const joinsIn = (d) => d == null ? '' : d > 1 ? `joins in ${d} days` : d === 1 ? 'joins tomorrow' : d === 0 ? 'joins today' : `joined ${-d} days ago`;
+
+// "Needs attention": exceptions only — what an HR lead would act on today.
+function renderAttention() {
+  const box = $('#attention'); if (!box) return;
+  const soon = employees.filter((e) => e.days_to_join >= 0 && e.days_to_join <= 7 && e.open_critical > 0)
+    .sort((a, b) => a.days_to_join - b.days_to_join);
+  const blocked = employees.filter((e) => ['Discrepancy', 'Blocked'].includes(e.bgv_status));
+  const byOwner = {};
+  employees.forEach((e) => (e.overdue || []).forEach((t) => { (byOwner[t.owner] ||= []).push({ ...t, who: e.employee_name }); }));
+  const owners = Object.entries(byOwner).sort((a, b) => b[1].length - a[1].length);
+  const totalOverdue = owners.reduce((n, [, v]) => n + v.length, 0);
+  $('#stat-attention').textContent = new Set([...soon, ...blocked].map((e) => e.employee_id)).size;
+  box.innerHTML = `
+    <div class="att-col"><h3>Joining within 7 days with critical tasks open</h3>
+      ${soon.length ? `<ul class="clean">${soon.map((e) => `<li><b>${esc(e.employee_name)}</b> · ${joinsIn(e.days_to_join)} · <span class="pill warn">${e.open_critical} critical open</span></li>`).join('')}</ul>` : '<p class="muted">None, all set.</p>'}</div>
+    <div class="att-col"><h3>Overdue tasks by team (${totalOverdue})</h3>
+      ${owners.length ? `<ul class="clean">${owners.map(([o, v]) => `<li><span class="owner">${esc(o)}</span> <b>${v.length}</b> overdue <span class="muted small">(${[...new Set(v.map((x) => x.who))].map(esc).join(', ')})</span></li>`).join('')}</ul>` : '<p class="muted">Nothing overdue.</p>'}</div>
+    <div class="att-col"><h3>Blocked</h3>
+      ${blocked.length ? `<ul class="clean">${blocked.map((e) => `<li><b>${esc(e.employee_name)}</b> · background verification ${esc(e.bgv_status.toLowerCase())}</li>`).join('')}</ul>` : '<p class="muted">No blocked hires.</p>'}</div>`;
+}
+
 
 async function loadHealth() {
   const el = $('#health');
@@ -259,6 +283,55 @@ $('#chat-form').addEventListener('submit', async (ev) => {
 });
 
 // ---------- Progress ----------
+const PHASES = ['Pre-joining', 'Day 1', 'First 30 days'];
+let progressState = null; // { id, employee, tasks, progress, source }
+
+function renderProgress() {
+  const { id, employee: e = {}, tasks, progress: p, source } = progressState;
+  const today = new Date().toISOString().slice(0, 10);
+  const li = (arr) => arr.length ? `<ul class="clean">${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">None</p>';
+  const row = (t) => {
+    const late = t.status !== 'done' && t.due_date < today;
+    return `<label class="task ${t.status === 'done' ? 'done' : ''}">
+      <input type="checkbox" data-task="${t.id}" ${t.status === 'done' ? 'checked' : ''} />
+      <span class="tname">${esc(t.task_name)}</span>
+      <span class="owner">${esc(t.owner || 'Unassigned')}</span>
+      <span class="due ${late ? 'late' : ''}">${late ? 'Overdue · ' : ''}due ${esc(t.due_date)}</span>
+      ${t.critical ? '<span class="pill bad">critical</span>' : ''}</label>`;
+  };
+  const groups = PHASES.map((ph) => {
+    const list = tasks.filter((t) => (t.phase || 'Pre-joining') === ph);
+    if (!list.length) return '';
+    const d = list.filter((t) => t.status === 'done').length;
+    return `<div class="phase"><h3>${ph} <span class="muted small">${d}/${list.length} done</span></h3>${list.map(row).join('')}</div>`;
+  }).join('');
+  $('#progress-out').innerHTML = `
+    <div class="cards">
+      <div class="card stat"><span class="label">Employee</span><span class="value small">${esc(p.employee_name || e.employee_name)}</span><span class="sub">${esc(id)} · ${esc(e.department || '')} · ${esc(joinsIn(Math.round((new Date(e.joining_date) - new Date(today)) / 864e5)))}</span></div>
+      <div class="card stat"><span class="label">Status</span><span class="value small">${statusPill(p.status)}</span><span class="sub">BGV: ${esc(p.bgv_status)} · Payroll: ${esc(p.payroll_status)}</span></div>
+      <div class="card stat"><span class="label">Overall progress</span><span class="value">${esc(p.completion_percentage)}%</span><div class="bar"><span style="width:${p.completion_percentage}%"></span></div></div>
+      <div class="card stat"><span class="label">Tasks</span><span class="value small">${p.completed} done · ${p.pending} pending · ${p.overdue} overdue</span></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h2>Onboarding checklist</h2><p class="hint">Tick a task when it's done. Progress, status and blockers update straight away.</p>${groups}</div>
+      <div class="card"><h2>Blockers</h2>${li(p.blockers || [])}
+        <h2 style="margin-top:14px">Next priorities</h2>${li(p.next_priorities || [])}</div>
+    </div>
+    <span class="mcp-badge">${esc(source)}</span>`;
+  document.querySelectorAll('#progress-out [data-task]').forEach((cb) => cb.addEventListener('change', toggleTask));
+}
+
+async function toggleTask(ev) {
+  const cb = ev.target; cb.disabled = true;
+  try {
+    const r = await api('/tasks/status', { task_id: Number(cb.dataset.task), done: cb.checked });
+    Object.assign(progressState, { tasks: r.tasks, progress: r.progress, source: r.source });
+    renderProgress();
+    loadEmployees(); // keep the dashboard in sync
+  } catch (e) { cb.checked = !cb.checked; cb.disabled = false; alertBox(e.message); }
+}
+const alertBox = (msg) => $('#progress-out').insertAdjacentHTML('afterbegin', errorBox(msg));
+
 $('#btn-progress').addEventListener('click', async (ev) => {
   const id = $('#progress-emp').value; if (!id) return;
   const out = $('#progress-out');
@@ -266,27 +339,14 @@ $('#btn-progress').addEventListener('click', async (ev) => {
   out.innerHTML = '<div class="result">Asking the <b>Onboarding Progress</b> tool on n8n… this usually takes 5–15 seconds (longer if the free server was asleep).</div>';
   try {
     const r = await api('/progress?id=' + encodeURIComponent(id));
-    const p = r.progress, e = r.employee || {};
-    const done = r.tasks.filter((t) => t.status === 'done');
-    const open = r.tasks.filter((t) => t.status !== 'done');
-    const li = (arr, cls = '') => arr.length ? `<ul class="clean">${arr.map((x) => `<li class="${cls}">${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">None</p>';
-    out.innerHTML = `
-      <div class="cards">
-        <div class="card stat"><span class="label">Employee</span><span class="value small">${esc(p.employee_name || e.employee_name)}</span><span class="sub">${esc(id)} · ${esc(e.department || '')}</span></div>
-        <div class="card stat"><span class="label">Status</span><span class="value small">${statusPill(p.status)}</span><span class="sub">BGV: ${esc(p.bgv_status)} · Payroll: ${esc(p.payroll_status)}</span></div>
-        <div class="card stat"><span class="label">Overall progress</span><span class="value">${esc(p.completion_percentage)}%</span><div class="bar"><span style="width:${p.completion_percentage}%"></span></div></div>
-        <div class="card stat"><span class="label">Tasks</span><span class="value small">${p.completed} done · ${p.pending} pending · ${p.overdue} overdue</span></div>
-      </div>
-      <div class="grid2">
-        <div class="card"><h2>Pending tasks</h2>${li(open.map((t) => `${t.task_name} — due ${t.due_date} (${t.priority})`))}
-          <h2 style="margin-top:14px">Completed tasks</h2>${li(done.map((t) => t.task_name), 'task-done')}</div>
-        <div class="card"><h2>Blockers</h2>${li(p.blockers || [])}
-          <h2 style="margin-top:14px">Next priorities</h2>${li(p.next_priorities || [])}</div>
-      </div>
-      <span class="mcp-badge">${esc(r.source)}</span>`;
+    progressState = { id, employee: r.employee || {}, tasks: r.tasks, progress: r.progress, source: r.source };
+    renderProgress();
   } catch (e) { out.innerHTML = errorBox(e.message); }
   busy(ev.target, false);
 });
+
+// Tech details (tool badges) are hidden by default for business audiences.
+$('#tech-toggle').addEventListener('change', (e) => document.body.classList.toggle('show-tech', e.target.checked));
 
 loadHealth();
 loadEmployees();
