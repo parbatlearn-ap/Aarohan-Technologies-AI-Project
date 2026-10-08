@@ -43,12 +43,29 @@ const routes = {
 
   'GET /employees': async () => {
     const [emps, tasks] = await Promise.all([db.listEmployees(), db.listTasks()]);
+    const today = new Date().toISOString().slice(0, 10);
     const rows = emps.map(e => {
       const t = tasks.filter(x => x.employee_id === e.employee_id);
       const done = t.filter(x => x.status === 'done').length;
-      return { ...e, tasks_total: t.length, tasks_done: done, progress: t.length ? Math.round(done * 100 / t.length) : 0 };
+      const open = t.filter(x => x.status !== 'done');
+      const overdue = open.filter(x => x.due_date && x.due_date < today)
+        .map(x => ({ task_name: x.task_name, owner: x.owner || 'Unassigned', due_date: x.due_date, critical: !!x.critical }));
+      const days_to_join = Math.round((new Date(e.joining_date) - new Date(today)) / 864e5);
+      return { ...e, tasks_total: t.length, tasks_done: done, progress: t.length ? Math.round(done * 100 / t.length) : 0,
+        open_critical: open.filter(x => x.critical).length, overdue, days_to_join };
     });
     return json({ employees: rows });
+  },
+
+  // Tick / untick a checklist task; returns the hire's refreshed progress (fast, from the database).
+  'POST /tasks/status': async (req) => {
+    const { task_id, done } = await readBody(req);
+    const task = await db.getTask(task_id);
+    if (!task) return json({ error: 'Task not found.' }, 404);
+    await db.setTaskStatus(task_id, !!done);
+    await db.logActivity(task.employee_id, done ? 'task_done' : 'task_reopened', { task: task.task_name });
+    const [emp, tasks] = await Promise.all([db.getEmployee(task.employee_id), db.listTasks(task.employee_id)]);
+    return json({ tasks, progress: computeProgress(emp, tasks), source: 'Updated just now from the onboarding checklist' });
   },
 
   'POST /employees': async (req) => {
@@ -70,14 +87,29 @@ const routes = {
       employee_id: id, employee_name: b.employee_name, email: b.email, department: b.department || 'General',
       role_title: b.role_title || '', is_virtual: !!b.is_virtual, joining_date: joining,
     });
-    const due = (d) => new Date(new Date(joining).getTime() - d * 864e5).toISOString().slice(0, 10);
+    const due = (d) => new Date(new Date(joining).getTime() + d * 864e5).toISOString().slice(0, 10);
+    const virtual = !!b.is_virtual;
+    // Standard onboarding checklist: [order, phase, task, owner, days from joining, critical]
     const std = [
-      ['Accept offer letter', 'high', 6], ['Submit identity documents', 'high', 4],
-      ['Submit bank details form for payroll', 'high', 2],
-      [b.is_virtual ? 'Complete VPN / remote access setup' : 'Collect ID badge on Day 1', 'medium', b.is_virtual ? 1 : 0],
-      ['Attend orientation', 'medium', 0],
+      [1, 'Pre-joining', 'Accept offer letter', 'New hire', -14, true],
+      [2, 'Pre-joining', 'Submit identity & education documents', 'New hire', -10, true],
+      [3, 'Pre-joining', 'Submit bank details for payroll', 'New hire', -7, true],
+      [4, 'Pre-joining', 'Create employee ID & HR system profile', 'HR', -7, false],
+      [5, 'Pre-joining', 'Raise laptop & software access request', 'IT', -7, true],
+      [6, 'Pre-joining', 'Background verification cleared', 'HR', -5, true],
+      virtual ? [7, 'Pre-joining', 'Courier laptop to home address', 'IT', -3, false] : [7, 'Pre-joining', 'Prepare workstation & access card', 'Facilities', -3, false],
+      [8, 'Pre-joining', 'Assign onboarding buddy', 'Manager', -2, false],
+      [9, 'Pre-joining', 'Schedule Day-1 inductions (HR, IT, team)', 'HR', -2, false],
+      [10, 'Day 1', 'Verify documents & complete joining forms', 'HR', 0, true],
+      [11, 'Day 1', 'HR & IT induction sessions', 'HR', 0, false],
+      [12, 'Day 1', 'Team & buddy introduction', 'Manager', 0, false],
+      [13, 'First 30 days', 'Meet department heads', 'Manager', 7, false],
+      [14, 'First 30 days', 'Role & product training', 'Manager', 21, false],
+      [15, 'First 30 days', '30-day check-in with HR', 'HR', 30, false],
     ];
-    await db.createTasks(std.map(([task_name, priority, d]) => ({ employee_id: id, task_name, priority, status: 'pending', due_date: due(d) })));
+    await db.createTasks(std.map(([sort_order, phase, task_name, owner, d, critical]) => ({
+      employee_id: id, task_name, phase, owner, critical, sort_order, priority: critical ? 'high' : 'medium', status: 'pending', due_date: due(d),
+    })));
     await db.logActivity(id, 'employee_created', { department: emp.department });
     return json({ employee: emp });
   },
